@@ -8,6 +8,9 @@
   NPM_FLAGS = "--legacy-peer-deps"
   SECRETS_SCAN_ENABLED = "false"
 
+[functions]
+  external_node_modules = ["@netlify/blobs"]
+
 # Route /api/* requests to Netlify Serverless Function
 [[redirects]]
   from = "/api/*"

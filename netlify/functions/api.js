@@ -1,4 +1,3 @@
-import { getStore } from '@netlify/blobs';
 import fallbackProducts from '../../src/data/products.json';
 import fallbackSettings from '../../src/data/siteSettings.json';
 
@@ -6,17 +5,36 @@ import fallbackSettings from '../../src/data/siteSettings.json';
 function getFallbackData() {
   return {
     products: Array.isArray(fallbackProducts) ? fallbackProducts : [],
-    settings: fallbackSettings || { categories: [], contacts: {} }
+    settings: fallbackSettings || { categories: [], contacts: {}, branches: [], testimonials: [] }
   };
+}
+
+let getStoreFn = null;
+async function getBlobStore(options) {
+  if (!getStoreFn) {
+    try {
+      const mod = await import('@netlify/blobs');
+      getStoreFn = mod.getStore;
+    } catch (e) {
+      return null;
+    }
+  }
+  try {
+    return getStoreFn ? getStoreFn(options) : null;
+  } catch (e) {
+    return null;
+  }
 }
 
 // Netlify Blob helpers for Products
 async function getStoredProducts() {
   try {
-    const store = getStore({ name: 'meratto-data', consistency: 'strong' });
-    const data = await store.get('products', { type: 'json' });
-    if (Array.isArray(data) && data.length > 0) {
-      return data;
+    const store = await getBlobStore({ name: 'meratto-data', consistency: 'strong' });
+    if (store) {
+      const data = await store.get('products', { type: 'json' });
+      if (Array.isArray(data) && data.length > 0) {
+        return data;
+      }
     }
   } catch (err) {
     console.log('[Netlify Function] Blobs products read fallback:', err.message);
@@ -26,22 +44,26 @@ async function getStoredProducts() {
 
 async function setStoredProducts(items) {
   try {
-    const store = getStore({ name: 'meratto-data', consistency: 'strong' });
-    await store.setJSON('products', items);
-    return true;
+    const store = await getBlobStore({ name: 'meratto-data', consistency: 'strong' });
+    if (store) {
+      await store.setJSON('products', items);
+      return true;
+    }
   } catch (err) {
     console.error('[Netlify Function] Blobs products write error:', err.message);
-    return false;
   }
+  return false;
 }
 
 // Netlify Blob helpers for Settings
 async function getStoredSettings() {
   try {
-    const store = getStore({ name: 'meratto-data', consistency: 'strong' });
-    const data = await store.get('settings', { type: 'json' });
-    if (data && Array.isArray(data.categories)) {
-      return data;
+    const store = await getBlobStore({ name: 'meratto-data', consistency: 'strong' });
+    if (store) {
+      const data = await store.get('settings', { type: 'json' });
+      if (data && Array.isArray(data.categories)) {
+        return data;
+      }
     }
   } catch (err) {
     console.log('[Netlify Function] Blobs settings read fallback:', err.message);
@@ -51,13 +73,15 @@ async function getStoredSettings() {
 
 async function setStoredSettings(settings) {
   try {
-    const store = getStore({ name: 'meratto-data', consistency: 'strong' });
-    await store.setJSON('settings', settings);
-    return true;
+    const store = await getBlobStore({ name: 'meratto-data', consistency: 'strong' });
+    if (store) {
+      await store.setJSON('settings', settings);
+      return true;
+    }
   } catch (err) {
     console.error('[Netlify Function] Blobs settings write error:', err.message);
-    return false;
   }
+  return false;
 }
 
 // Cloud Storage Image Uploader
@@ -86,7 +110,8 @@ async function uploadImageToCloud(base64, filename) {
 
   // 2. Netlify Blobs storage for images
   try {
-    const store = getStore({ name: 'meratto-images', consistency: 'strong' });
+    const store = await getBlobStore({ name: 'meratto-images', consistency: 'strong' });
+    if (!store) throw new Error('Blobs not initialized');
     const matches = base64.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
     const buffer = matches ? Buffer.from(matches[2], 'base64') : Buffer.from(base64, 'base64');
     const ext = matches && matches[1].includes('png') ? 'png' : 'jpg';
