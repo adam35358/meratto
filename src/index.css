@@ -1,0 +1,236 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #07080a;
+    --background-2: #0b0d10;
+    --foreground: #eef0f3;
+    --muted-foreground: #8f96a0;
+    --subtle: #5f6671;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --panel: rgba(13, 15, 19, 0.72);
+    --panel-strong: rgba(17, 19, 24, 0.88);
+    --gold: #E5C378;
+    --positive: #4fc79a;
+    --ease-silk: cubic-bezier(.22, 1, .36, 1);
+  }
+
+  html {
+    font-family: 'Manrope', system-ui, sans-serif;
+    scroll-behavior: smooth;
+    background-color: #07080a;
+    color: #eef0f3;
+  }
+}
+
+/* WOUFX Minimalist Tech Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #07080a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #E5C378;
+}
+
+/* WOUFX Architectural Grid Pattern */
+.bg-tech-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+/* WOUFX Glass Panels */
+.woufx-panel {
+  background: rgba(13, 15, 19, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 24px 48px -20px rgba(0, 0, 0, 0.7);
+}
+
+.woufx-panel-strong {
+  background: rgba(17, 19, 24, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 32px 64px -24px rgba(0, 0, 0, 0.85);
+}
+
+/* WOUFX Pill Badge */
+.woufx-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.625rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8f96a0;
+  backdrop-filter: blur(12px);
+}
+
+/* WOUFX Button Silk */
+.btn-woufx-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: 9999px;
+  background: #E5C378;
+  color: #07080a;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 20px rgba(229, 195, 120, 0.25);
+  transition: all 0.3s cubic-bezier(.22, 1, .36, 1);
+}
+
+.btn-woufx-primary:hover {
+  background: #FFFFFF;
+  box-shadow: 0 6px 28px rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-woufx-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #eef0f3;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(16px);
+  transition: all 0.3s cubic-bezier(.22, 1, .36, 1);
+}
+
+.btn-woufx-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+/* Luxury Animations */
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes fadeInUpStagger {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUpStagger 0.5s cubic-bezier(.22, 1, .36, 1) forwards;
+}
+
+/* Card perspective */
+.card-perspective {
+  perspective: 1200px;
+}
+
+/* ========================================================
+   WOUFX 3D CAMERA DEPTH & TUNNEL SCROLL ENGINE
+   ======================================================== */
+
+/* Scene Exit: As a section is scrolled past, it sinks into 3D depth and shrinks */
+.scene-exit {
+  opacity: calc(1 - var(--exit, 0) * 1.12);
+  transform: perspective(1200px) translate3d(0, calc(var(--exit, 0) * -8vh), calc(var(--exit, 0) * -110px)) scale(calc(1 - var(--exit, 0) * 0.055));
+  transform-origin: 50% 15%;
+  will-change: opacity, transform;
+}
+
+/* 3D Reveal Scale: Incoming sections start deep in 3D perspective and zoom forward into focus */
+[data-reveal="scale"] {
+  opacity: 0;
+  filter: blur(8px);
+  transform: perspective(1200px) scale(0.93) translateZ(-70px);
+  transition: opacity 0.85s cubic-bezier(.22, 1, .36, 1),
+              transform 1.05s cubic-bezier(.22, 1, .36, 1),
+              filter 0.85s cubic-bezier(.22, 1, .36, 1);
+  will-change: opacity, transform, filter;
+}
+
+[data-reveal="scale"].is-in {
+  opacity: 1;
+  filter: blur(0px);
+  transform: perspective(1200px) scale(1) translateZ(0px);
+}
+
+/* Fast & crisp card 3D depth pop-in */
+[data-reveal="card"] {
+  opacity: 1;
+  transform: perspective(1000px) translateY(0) scale(1);
+  transition: transform 0.35s cubic-bezier(.22, 1, .36, 1), box-shadow 0.35s cubic-bezier(.22, 1, .36, 1);
+  will-change: transform;
+}
+
+/* 3D Infinite Tunnel Grid Stage */
+.world-stage-3d {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  perspective: 1000px;
+  overflow: hidden;
+}
+
+.world-grid-tunnel {
+  position: absolute;
+  inset: -30%;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.032) 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform-origin: 50% 50%;
+  transform: rotateX(20deg) translateZ(calc(var(--scroll-depth, 0px) * 0.12));
+  will-change: transform;
+}

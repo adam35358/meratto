@@ -1,0 +1,71 @@
+{
+  "categories": [
+    {
+      "id": "dvoyka",
+      "name": "Dvoykalar"
+    },
+    {
+      "id": "costume",
+      "name": "Kostyumlar"
+    },
+    {
+      "id": "casual",
+      "name": "Smart Casual"
+    },
+    {
+      "id": "jacket",
+      "name": "Kurtkalar & Jilet"
+    },
+    {
+      "id": "shirt",
+      "name": "Ko'ylak & Trikotaj"
+    },
+    {
+      "id": "pants",
+      "name": "Shimlar & Djinsi"
+    },
+    {
+      "id": "shoes",
+      "name": "Lofer & Poyabzal"
+    },
+    {
+      "id": "accessories",
+      "name": "Aksessuarlar"
+    }
+  ],
+  "contacts": {
+    "mainPhone": "+998 98 311 33 37",
+    "branches": [
+      {
+        "id": "meratto-qoratosh",
+        "name": "Meratto Qoratosh",
+        "node": "Node 01: Qoratosh 5B",
+        "address": "Qoratosh ko'chasi, 5B-uy",
+        "phones": [
+          "+998 98 311 33 37",
+          "+998 99 866 52 25"
+        ]
+      },
+      {
+        "id": "meratto-chilonzor",
+        "name": "Meratto Chilonzor",
+        "node": "Node 02: Chilonzor S-14",
+        "address": "Qatortol ko'chasi, S kvartal 14",
+        "phones": [
+          "+998 97 660 66 44",
+          "+998 94 805 10 58"
+        ]
+      },
+      {
+        "id": "de-franko-qoratosh",
+        "name": "De Franko",
+        "node": "Node 03: Qoratosh 65",
+        "address": "Qoratosh ko'chasi, 65-uy",
+        "phones": [
+          "+998 99 302 11 66",
+          "+998 95 889 16 18"
+        ]
+      }
+    ]
+  }
+}
