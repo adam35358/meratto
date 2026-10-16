@@ -17,6 +17,12 @@
   to = "/.netlify/functions/api/:splat"
   status = 200
 
+# Google Search Console verification file
+[[redirects]]
+  from = "/google15dfa24e4334f6c8.html"
+  to = "/google15dfa24e4334f6c8.html"
+  status = 200
+
 # SPA fallback for React Client-Side Routing
 [[redirects]]
   from = "/*"
