@@ -9,6 +9,7 @@ export default function OrderForm({ prefillProduct, cart, clearCart, lang, t }) 
   const [deliveryType, setDeliveryType] = useState('courier'); // 'courier' | 'branch'
   const [selectedBranch, setSelectedBranch] = useState(branches[0].id);
   const [paymentType, setPaymentType] = useState('door'); // 'door' | 'online' | 'store'
+  const [address, setAddress] = useState('');
   const [notes, setNotes] = useState('');
   const [customProductText, setCustomProductText] = useState('');
   
@@ -17,12 +18,18 @@ export default function OrderForm({ prefillProduct, cart, clearCart, lang, t }) 
   const [submittedData, setSubmittedData] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Sync with prefilled product
+  // Sync with prefilled product or look
   useEffect(() => {
     if (prefillProduct) {
-      const prodName = prefillProduct.name[lang] || prefillProduct.name.uz;
-      const sizeText = prefillProduct.selectedSize ? ` [O'lcham: ${prefillProduct.selectedSize}]` : '';
-      setCustomProductText(`${prodName}${sizeText}`);
+      if (typeof prefillProduct === 'string') {
+        setCustomProductText(prefillProduct);
+      } else {
+        const prodName = typeof prefillProduct.name === 'object'
+          ? (prefillProduct.name[lang] || prefillProduct.name.uz)
+          : (prefillProduct.name || prefillProduct.title || '');
+        const sizeText = prefillProduct.selectedSize ? ` [O'lcham: ${prefillProduct.selectedSize}]` : '';
+        setCustomProductText(`${prodName}${sizeText}`);
+      }
     }
   }, [prefillProduct, lang]);
 
@@ -93,6 +100,7 @@ export default function OrderForm({ prefillProduct, cart, clearCart, lang, t }) 
       products: getCartSummaryText() || "Smart Casual kiyimlar konsultatsiyasi",
       deliveryType: deliveryType === 'courier' ? "Kuryer orqali yetkazish" : `Do'kondan olib ketish (${chosenBranch})`,
       paymentType: paymentType === 'door' ? "Eshik oldida (Naqd/Karta)" : paymentType === 'online' ? "Click / Payme" : "Do'konda to'lash",
+      address: deliveryType === 'courier' ? address.trim() : '',
       notes: notes.trim(),
       date: new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' })
     };
@@ -245,6 +253,24 @@ export default function OrderForm({ prefillProduct, cart, clearCart, lang, t }) 
               </div>
             </div>
 
+            {/* If Courier Delivery: Address Input */}
+            {deliveryType === 'courier' && (
+              <div className="p-4 rounded-xl bg-[#07080a] border border-[#E5C378]/30 space-y-2 animate-fade-in">
+                <label className="block font-mono text-xs text-[#E5C378] uppercase tracking-[0.16em] flex items-center gap-1.5 font-medium">
+                  <MapPin className="w-4 h-4 text-[#E5C378]" />
+                  <span>Yetkazish Manzili (Shahar, tuman, ko'cha, uy/xonadon) <span className="text-red-400">*</span></span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Masalan: Toshkent sh., Chilonzor tumani, 9-mavze, 12-uy, 45-xonadon..."
+                  className="w-full px-4 py-3 rounded-xl bg-[#16181f] border border-white/10 text-white placeholder-[#5f6671] focus:outline-none focus:border-[#E5C378] transition-colors text-sm font-sans"
+                />
+              </div>
+            )}
+
             {/* If Branch Pickup: Select Branch */}
             {deliveryType === 'branch' && (
               <div className="p-4 rounded-xl bg-[#07080a] border border-white/10 space-y-2 animate-fade-in">
@@ -315,11 +341,11 @@ export default function OrderForm({ prefillProduct, cart, clearCart, lang, t }) 
             </div>
 
             {/* Dedicated Izohlar (Order Notes / Instructions) Field */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
+            <div className="p-4 rounded-xl bg-[#07080a] border border-white/10 space-y-2">
+              <div className="flex items-center justify-between">
                 <label className="font-mono text-xs text-[#E5C378] uppercase tracking-[0.16em] flex items-center gap-1.5 font-medium">
-                  <MessageSquare className="w-3.5 h-3.5 text-[#E5C378]" />
-                  <span>{t.form.notesLabel || "Izohlar (Yetkazish manzili, vaqti yoki kiyim o'lchami bo'yicha)"}</span>
+                  <MessageSquare className="w-4 h-4 text-[#E5C378]" />
+                  <span>📝 {t.form.notesLabel || "Qo'shimcha Izohlar va Istaklar"}</span>
                 </label>
                 <span className="text-[10px] font-mono text-[#8f96a0]">(Ixtiyoriy)</span>
               </div>
@@ -327,12 +353,12 @@ export default function OrderForm({ prefillProduct, cart, clearCart, lang, t }) 
                 rows="3"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder={t.form.notesPlaceholder || "Yetkazish manzili, qulay vaqt yoki bo'y-vazn bo'yicha izoh qoldiring..."}
-                className="w-full px-4 py-3 rounded-xl bg-[#07080a] border border-white/10 text-white placeholder-[#5f6671] focus:outline-none focus:border-[#E5C378]/60 transition-colors text-sm leading-relaxed resize-none"
+                placeholder={t.form.notesPlaceholder || "Kuryerga qulay yetkazish vaqti, bo'y-vazningiz, dom kodi, etaj yoki alohida istaklaringizni yozib qoldiring..."}
+                className="w-full px-4 py-3 rounded-xl bg-[#16181f] border border-white/10 text-white placeholder-[#5f6671] focus:outline-none focus:border-[#E5C378] transition-colors text-sm leading-relaxed resize-none"
               />
-              <div className="text-[10px] text-[#8f96a0] mt-1.5 flex items-center gap-1 font-mono">
+              <div className="text-[10.5px] text-[#8f96a0] flex items-center gap-1.5 font-mono">
                 <span className="text-[#E5C378]">💡</span>
-                <span>Aniq manzil, dom kodi, etaj yoki qulay vaqtni shu yerga yozishingiz mumkin.</span>
+                <span>Yetkazish vaqti, eshik kodi yoki kiyim o'lchami bo'yicha maslahat so'rash uchun yozishingiz mumkin.</span>
               </div>
             </div>
 

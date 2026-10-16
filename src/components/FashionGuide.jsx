@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Sparkles, Compass, ShieldCheck, TrendingUp, Layers, CheckCircle2, ArrowRight } from 'lucide-react';
 
-export default function FashionGuide({ lang = 'uz', t }) {
+export default function FashionGuide({ lang = 'uz', t, looksData = [], onSelectLook }) {
   const [activeTab, setActiveTab] = useState('rules');
-  const [activeLook, setActiveLook] = useState('business');
+  const [selectedLookId, setSelectedLookId] = useState('');
 
   const guides = {
     uz: {
@@ -330,7 +330,56 @@ export default function FashionGuide({ lang = 'uz', t }) {
 
   const content = getContent();
 
-  const handleSelectLook = (outfitText) => {
+  const fallbackLooks = [
+    {
+      id: 'business',
+      tag: "OFIS & BIZNES UCHRASHUV",
+      label: "Ofis & Biznes Uchrashuv",
+      title: "To'q Ko'k Dvoyka + Oq Oxford Ko'ylak + Tabiiy Charm Loferlar",
+      desc: "Hamkorlar bilan muzokaralar va nufuzli tadbirlar uchun. Salobatli, jiddiy va ortiqcha dabdabasiz.",
+      price: 1450000,
+      image: "/images/products/real_dvoyka_sportchic_navy.jpg",
+      imagePosition: { x: 50, y: 30 }
+    },
+    {
+      id: 'evening',
+      tag: "KECHKI BAZM & RESTORAN",
+      label: "Kechki Bazm & Restoran",
+      title: "Shokolad Melanj Dvoyka + Qora Sviter + Bordo Ipak Ro'molcha",
+      desc: "Kechki uchrashuv va shinam restorandagi kechki ovqat uchun hashamatli iliq ranglar uyg'unligi.",
+      price: 1650000,
+      image: "/images/products/real_jacket_cucinelli_wool.jpg",
+      imagePosition: { x: 50, y: 40 }
+    },
+    {
+      id: 'weekend',
+      tag: "DAM OLISH & SAYOHAT",
+      label: "Dam Olish & Sayohat",
+      title: "Aviator Mo'ynali Kurtka + Dark Indigo Djinsi + Oq Tagcharmli Poyabzal",
+      desc: "Avtomobilda harakatlanish, oilaviy sayr va sayohatlarda maksimal erkinlik va zamonaviy uslub.",
+      price: 1850000,
+      image: "/images/products/real_coat_cashmere_black.jpg",
+      imagePosition: { x: 50, y: 35 }
+    }
+  ];
+
+  const looksList = Array.isArray(looksData) && looksData.length > 0 ? looksData : fallbackLooks;
+  const activeLookId = selectedLookId && looksList.some(l => l.id === selectedLookId)
+    ? selectedLookId
+    : looksList[0]?.id;
+  const currentLook = looksList.find(l => l.id === activeLookId) || looksList[0] || fallbackLooks[0];
+
+  const handleSelectLook = (look) => {
+    if (onSelectLook) {
+      onSelectLook({
+        id: look.id,
+        name: { uz: look.title || look.outfit, ru: look.title || look.outfit, en: look.title || look.outfit },
+        title: look.title || look.outfit,
+        price: look.price || 0,
+        code: 'LOOK-' + (look.id || 'OUTFIT').toUpperCase(),
+        isLook: true
+      });
+    }
     const orderSection = document.getElementById('order');
     if (orderSection) {
       orderSection.scrollIntoView({ behavior: 'smooth' });
@@ -423,7 +472,7 @@ export default function FashionGuide({ lang = 'uz', t }) {
           </div>
         </div>
 
-        {/* Interactive Lookbook Recommender */}
+        {/* Interactive Lookbook Recommender (Admin managed with Framing & Ordering) */}
         <div className="woufx-panel-strong rounded-3xl p-6 sm:p-8">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-6">
             <div>
@@ -437,47 +486,85 @@ export default function FashionGuide({ lang = 'uz', t }) {
             
             {/* Scenario selector buttons */}
             <div className="flex items-center gap-2 flex-wrap">
-              {['business', 'evening', 'weekend'].map((lookKey) => {
-                const lookData = currentGuide.looks[lookKey];
-                const isSelected = activeLook === lookKey;
+              {looksList.map((look) => {
+                const isSelected = activeLookId === look.id;
                 return (
                   <button
-                    key={lookKey}
-                    onClick={() => setActiveLook(lookKey)}
+                    key={look.id}
+                    onClick={() => setSelectedLookId(look.id)}
                     className={`px-4 py-2 rounded-full font-mono text-[11px] uppercase tracking-wider transition-all ${
                       isSelected
-                        ? 'bg-[#E5C378] text-[#07080a] font-bold shadow-md'
+                        ? 'bg-[#E5C378] text-[#07080a] font-bold shadow-lg shadow-[#E5C378]/25 scale-105'
                         : 'bg-white/[0.03] hover:bg-white/[0.06] text-[#8f96a0] border border-white/10'
                     }`}
                   >
-                    {lookData.label}
+                    {look.tag || look.label || look.title}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* Active Look Highlight Box */}
-          <div className="bg-[#07080a]/90 border border-white/10 rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
-            <div className="space-y-1.5 max-w-2xl">
-              <span className="font-mono text-[9px] uppercase tracking-widest px-2 py-0.5 rounded bg-white/[0.06] text-[#E5C378] border border-white/10 inline-block">
-                {currentGuide.looks[activeLook].label}
-              </span>
-              <h4 className="font-display font-medium text-lg text-white">
-                {currentGuide.looks[activeLook].outfit}
+          {/* Active Look Highlight Box with High-Fashion Image & Pricing */}
+          <div className="bg-[#07080a]/90 border border-white/10 rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row items-center gap-6">
+            {/* Look Image Frame with Custom Object Framing */}
+            {currentLook.image && (
+              <div className="relative w-full sm:w-48 md:w-56 aspect-[3/4] rounded-2xl overflow-hidden border border-[#E5C378]/30 shrink-0 shadow-2xl bg-black">
+                <img
+                  src={currentLook.image}
+                  alt={currentLook.title || currentLook.outfit}
+                  className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                  style={{
+                    objectPosition: `${currentLook.imagePosition?.x ?? 50}% ${currentLook.imagePosition?.y ?? 50}%`
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                  <span className="px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[#E5C378] text-[9px] font-mono border border-white/10">
+                    MRT LOOK
+                  </span>
+                  {currentLook.price > 0 && (
+                    <span className="px-2 py-0.5 rounded bg-[#E5C378] text-[#07080a] text-[10px] font-mono font-bold">
+                      {Number(currentLook.price).toLocaleString('uz-UZ')} UZS
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Look Description & Order Button */}
+            <div className="space-y-3 flex-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-mono text-[9px] uppercase tracking-widest px-2.5 py-1 rounded bg-[#E5C378]/10 text-[#E5C378] border border-[#E5C378]/25 font-semibold">
+                  {currentLook.tag || currentLook.label}
+                </span>
+                {currentLook.price > 0 && (
+                  <span className="font-mono text-sm font-bold text-white">
+                    {Number(currentLook.price).toLocaleString('uz-UZ')}{' '}
+                    <span className="text-xs text-[#E5C378]">so'm</span>
+                  </span>
+                )}
+              </div>
+
+              <h4 className="font-display font-medium text-lg sm:text-xl text-white leading-snug">
+                {currentLook.title || currentLook.outfit}
               </h4>
-              <p className="text-xs sm:text-sm text-[#8f96a0] font-normal">
-                {currentGuide.looks[activeLook].desc}
+              <p className="text-xs sm:text-sm text-[#8f96a0] font-normal leading-relaxed">
+                {currentLook.desc}
               </p>
+
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleSelectLook(currentLook)}
+                  className="btn-woufx-primary whitespace-nowrap text-xs flex items-center gap-2"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{lang === 'ru' ? "Заказать этот образ" : lang === 'en' ? "Order This Look" : "Ushbu obrazga buyurtma"}</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
-            
-            <button
-              onClick={() => handleSelectLook(currentGuide.looks[activeLook].outfit)}
-              className="btn-woufx-primary whitespace-nowrap self-start md:self-auto text-xs"
-            >
-              <span>{lang === 'ru' ? "Заказать этот образ" : lang === 'en' ? "Order This Look" : "Ushbu obrazga buyurtma"}</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
           </div>
 
         </div>

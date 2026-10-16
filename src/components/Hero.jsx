@@ -1,8 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, MapPin, Sparkles, ShieldCheck, Users, Flame, ExternalLink } from 'lucide-react';
 
-export default function Hero({ t }) {
+export default function Hero({ t, heroData = {} }) {
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
+
+  const eyebrow = heroData.eyebrow || "DIRECT ACCESS // 2026 SMART CASUAL COLLECTION";
+  const titleLine1 = heroData.titleLine1 || "O'z uslubingizni";
+  const titleHighlight = heroData.titleHighlight || "mukammallikka";
+  const titleLine2 = heroData.titleLine2 || "yetkazing.";
+  const subtitle = heroData.subtitle || "Meratto & De Franko — Toshkentdagi 3 ta zamonaviy premium filiallar tarmog'i. Yuqori italyancha did va qomatga mukammal o'tiruvchi Smart Casual kiyimlar, dvoykalar va eksklyuziv aksessuarlar.";
+  const badgeText = heroData.badgeText || "MRT-DV-01 // READY IN STORE";
+  const showcaseTitle = heroData.showcaseTitle || "Sport-Chic Dvoyka To'plami";
+  const showcasePrice = heroData.showcasePrice || 980000;
+  const showcaseImage = heroData.showcaseImage || "/images/products/real_dvoyka_sportchic_navy.jpg";
 
   useEffect(() => {
     const handleMove = (e) => {
@@ -40,20 +50,23 @@ export default function Hero({ t }) {
             {/* WOUFX Signature Live Status Eyebrow */}
             <div className="woufx-badge">
               <span className="w-1.5 h-1.5 rounded-full bg-[#4fc79a] animate-pulse" />
-              <span>DIRECT ACCESS // 2026 SMART CASUAL COLLECTION</span>
+              <span>{eyebrow}</span>
             </div>
 
             {/* Main Headline in Outfit Display Typography */}
             <h1 className="font-display font-light text-4xl sm:text-6xl lg:text-7xl text-white tracking-[-0.03em] leading-[1.06]">
-              O'z uslubingizni <br />
-              <span className="font-normal italic text-[#E5C378]">
-                mukammallikka
-              </span> yetkazing.
+              {titleLine1} <br />
+              {titleHighlight && (
+                <span className="font-normal italic text-[#E5C378] mr-2">
+                  {titleHighlight}
+                </span>
+              )}
+              {titleLine2}
             </h1>
 
             {/* Subtitle / Narrative in Manrope */}
             <p className="text-sm sm:text-base text-[#8f96a0] max-w-xl font-normal leading-relaxed mx-auto lg:mx-0">
-              <strong className="text-white font-medium">Meratto &amp; De Franko</strong> — Toshkentdagi 3 ta zamonaviy premium filiallar tarmog'i. Yuqori italyancha did va qomatga mukammal o'tiruvchi Smart Casual kiyimlar, dvoykalar va eksklyuziv aksessuarlar.
+              {subtitle}
             </p>
 
             {/* Action Buttons in WOUFX Silk Style */}
@@ -125,8 +138,8 @@ export default function Hero({ t }) {
 
                 <div className="relative aspect-[3/4] rounded-2xl overflow-hidden bg-black/80">
                   <img 
-                    src="/images/products/real_dvoyka_sportchic_navy.jpg" 
-                    alt="Meratto Sport-Chic Suit" 
+                    src={showcaseImage} 
+                    alt={showcaseTitle} 
                     className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#07080a] via-transparent to-transparent opacity-80" />
@@ -134,7 +147,7 @@ export default function Hero({ t }) {
                   {/* Floating Status Badge */}
                   <div className="absolute top-3.5 left-3.5 flex items-center gap-2 px-3 py-1 rounded-full bg-[#07080a]/80 border border-white/10 backdrop-blur-md font-mono text-[10px] text-white">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#4fc79a] animate-pulse" />
-                    <span>MRT-DV-01 // READY IN STORE</span>
+                    <span>{badgeText}</span>
                   </div>
 
                   {/* Outfit Info Bar */}
@@ -144,13 +157,13 @@ export default function Hero({ t }) {
                         FLAGSHIP MODEL
                       </div>
                       <div className="font-display font-medium text-sm text-white mt-0.5">
-                        Sport-Chic Dvoyka To'plami
+                        {showcaseTitle}
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-mono text-[9px] text-[#8f96a0] uppercase">NARX</div>
                       <div className="font-display font-medium text-sm text-[#E5C378]">
-                        980 000 <span className="font-mono text-[10px] text-[#8f96a0]">UZS</span>
+                        {Number(showcasePrice).toLocaleString('uz-UZ')} <span className="font-mono text-[10px] text-[#8f96a0]">UZS</span>
                       </div>
                     </div>
                   </div>

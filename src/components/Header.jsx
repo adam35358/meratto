@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingBag, Phone, Menu, X, Globe, ChevronDown, Sparkles } from 'lucide-react';
 
-export default function Header({ lang, setLang, t, cartCount, openCart, phone = "+998 98 311 33 37" }) {
+export default function Header({ lang, setLang, t, cartCount, openCart, phone = "+998 98 311 33 37", announcement }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langMenuOpen, setLangMenuOpen] = useState(false);
@@ -24,25 +24,34 @@ export default function Header({ lang, setLang, t, cartCount, openCart, phone = 
     <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
       {/* Top Technical Announcement Ticker (WOUFX Style) */}
       <div className="bg-[#07090c]/95 backdrop-blur-md border-b border-white/[0.06] text-[#8f96a0] text-[10.5px] font-mono tracking-[0.14em] uppercase py-1.5 px-4 hidden sm:flex items-center justify-between lg:justify-center gap-4 select-none">
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="w-1.5 h-1.5 rounded-full bg-[#4fc79a] animate-pulse shrink-0" />
-          <span className="whitespace-nowrap">
-            {lang === 'ru' ? "Экспресс-доставка по Ташкенту" : lang === 'en' ? "Express delivery across Tashkent" : "Toshkent bo'yicha tezkor yetkazish"}
-          </span>
-        </div>
-        <span className="text-white/20 shrink-0">&bull;</span>
-        <div className="hidden md:flex items-center gap-2 shrink-0">
-          <span className="whitespace-nowrap">
-            {lang === 'ru' ? "Примерка в 3 филиалах" : lang === 'en' ? "Fitting available at 3 boutiques" : "3 ta filialda kiyib ko'rish imkoni"}
-          </span>
-        </div>
-        <span className="hidden md:inline text-white/20 shrink-0">&bull;</span>
-        <div className="hidden lg:flex items-center gap-1.5 text-[#E5C378] shrink-0">
-          <Sparkles className="w-3 h-3 text-[#E5C378] shrink-0" />
-          <span className="whitespace-nowrap">
-            {lang === 'ru' ? "100% подлинные фото из Instagram @meratto.uz" : lang === 'en' ? "100% authentic photos from Instagram @meratto.uz" : "@meratto.uz Instagramdan 100% Asl Fotosuratlar"}
-          </span>
-        </div>
+        {announcement ? (
+          <div className="flex items-center gap-2 shrink-0 text-white">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#E5C378] animate-pulse shrink-0" />
+            <span className="whitespace-nowrap text-[#E5C378] font-medium">{announcement}</span>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#4fc79a] animate-pulse shrink-0" />
+              <span className="whitespace-nowrap">
+                {lang === 'ru' ? "Экспресс-доставка по Ташкенту" : lang === 'en' ? "Express delivery across Tashkent" : "Toshkent bo'yicha tezkor yetkazish"}
+              </span>
+            </div>
+            <span className="text-white/20 shrink-0">&bull;</span>
+            <div className="hidden md:flex items-center gap-2 shrink-0">
+              <span className="whitespace-nowrap">
+                {lang === 'ru' ? "Примерка в 3 филиалах" : lang === 'en' ? "Fitting available at 3 boutiques" : "3 ta filialda kiyib ko'rish imkoni"}
+              </span>
+            </div>
+            <span className="hidden md:inline text-white/20 shrink-0">&bull;</span>
+            <div className="hidden lg:flex items-center gap-1.5 text-[#E5C378] shrink-0">
+              <Sparkles className="w-3 h-3 text-[#E5C378] shrink-0" />
+              <span className="whitespace-nowrap">
+                {lang === 'ru' ? "100% подлинные фото из Instagram @meratto.uz" : lang === 'en' ? "100% authentic photos from Instagram @meratto.uz" : "@meratto.uz Instagramdan 100% Asl Fotosuratlar"}
+              </span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Main Navbar */}

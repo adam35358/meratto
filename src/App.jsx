@@ -73,8 +73,10 @@ export default function App() {
   // Dynamic Branches & Testimonials State
   const [siteBranches, setSiteBranches] = useState([]);
   const [siteTestimonials, setSiteTestimonials] = useState([]);
+  const [siteLooks, setSiteLooks] = useState([]);
+  const [siteHero, setSiteHero] = useState({});
 
-  // Fetch live categories, contacts, branches, and testimonials settings
+  // Fetch live categories, contacts, branches, testimonials, looks, and hero settings
   useEffect(() => {
     fetch('/api/settings')
       .then(res => res.ok ? res.json() : null)
@@ -94,6 +96,12 @@ export default function App() {
           }
           if (Array.isArray(data.testimonials)) {
             setSiteTestimonials(data.testimonials);
+          }
+          if (Array.isArray(data.looks)) {
+            setSiteLooks(data.looks);
+          }
+          if (data.hero) {
+            setSiteHero(data.hero);
           }
         }
       })
@@ -335,6 +343,12 @@ export default function App() {
           if (Array.isArray(newSettings.testimonials)) {
             setSiteTestimonials(newSettings.testimonials);
           }
+          if (Array.isArray(newSettings.looks)) {
+            setSiteLooks(newSettings.looks);
+          }
+          if (newSettings.hero) {
+            setSiteHero(newSettings.hero);
+          }
         }}
       />
 
@@ -373,12 +387,13 @@ export default function App() {
         cartCount={cart.reduce((total, item) => total + item.quantity, 0)}
         openCart={() => setIsCartOpen(true)}
         phone={siteContacts.mainPhone}
+        announcement={siteHero.announcementActive !== false ? siteHero.announcement : ''}
       />
 
       <main className="flex-1 relative z-10">
         
         {/* 1. Hero Section */}
-        <Hero t={t} />
+        <Hero t={t} heroData={siteHero} />
 
         {/* Transition Divider 1 */}
         <SectionDivider variant="glow-line" title="02 // MERATTO EKSKLYUZIV ASSORTIMENTI" />
@@ -472,7 +487,12 @@ export default function App() {
         <SectionDivider variant="glow-line" title="03 // EDITORIAL VA USLUB QOIDALARI" />
 
         {/* 3. Fashion Editorial & Style Rules Section */}
-        <FashionGuide lang={lang} t={t} />
+        <FashionGuide 
+          lang={lang} 
+          t={t} 
+          looksData={siteLooks} 
+          onSelectLook={(look) => setPrefillProduct(look)} 
+        />
 
         {/* Transition Divider 3 */}
         <SectionDivider variant="glow-line" title="04 // MIJOZLAR TAASSUROTIDAN" />

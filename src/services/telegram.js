@@ -48,6 +48,15 @@ export const formatTelegramOrderMessage = (data) => {
 
   const branchInfo = branchName || data.branch || (Array.isArray(items) && items[0]?.availableBranches ? items[0].availableBranches.join(', ') : '');
 
+  let noteManzil = '';
+  if (data.address && notes) {
+    noteManzil = `${data.address} | Izoh: ${notes}`;
+  } else if (data.address) {
+    noteManzil = data.address;
+  } else if (notes) {
+    noteManzil = notes;
+  }
+
   return `
 👤 <b>Mijoz:</b> ${escapeHtml(name || "Noma'lum xaridor")}
 📞 <b>Telefon:</b> <a href="tel:${cleanPhone}">${cleanPhone || phone}</a>
@@ -58,7 +67,7 @@ ${itemsText}${totalLine}
 
 🚚 <b>Yetkazish:</b> ${escapeHtml(deliveryType || "Kuryer orqali yetkazish")}
 💳 <b>To'lov turi:</b> ${escapeHtml(paymentType || "Click / Payme")}
-${notes ? `📝 <b>Izoh / Manzil:</b> <i>${escapeHtml(notes)}</i>\n` : ''}${branchInfo ? `🏪 <b>Do'kon / Filial:</b> ${escapeHtml(branchInfo)}\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+${noteManzil ? `📝 <b>Izoh / Manzil:</b> <i>${escapeHtml(noteManzil)}</i>\n` : ''}${branchInfo ? `🏪 <b>Do'kon / Filial:</b> ${escapeHtml(branchInfo)}\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 <i>🏛 Toshkent Boutique // Meratto &amp; De Franko Web Terminal</i>
 `.trim();
 };

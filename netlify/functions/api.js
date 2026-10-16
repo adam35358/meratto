@@ -333,10 +333,75 @@ export async function handler(event, context) {
           ...current,
           ...body,
           categories: body.categories || current.categories,
-          contacts: body.contacts || current.contacts
+          contacts: body.contacts || current.contacts,
+          branches: body.branches || current.branches,
+          testimonials: body.testimonials || current.testimonials,
+          looks: body.looks || current.looks,
+          hero: body.hero || current.hero
         };
         await setStoredSettings(updated);
         return { statusCode: 200, headers, body: JSON.stringify({ success: true, settings: updated }) };
+      }
+    }
+
+    // Looks CRUD (/api/looks)
+    if (pathname === '/api/looks' || pathname.startsWith('/api/looks/')) {
+      const settings = await getStoredSettings();
+      let looks = settings.looks || [];
+
+      if (method === 'GET') {
+        return { statusCode: 200, headers, body: JSON.stringify(looks) };
+      }
+
+      if (method === 'POST') {
+        const lookId = body.id || `look_${Date.now()}`;
+        const newLook = {
+          id: lookId,
+          tag: body.tag || 'OFIS & BIZNES UCHRASHUV',
+          title: body.title || 'Smart Casual To\'plam',
+          desc: body.desc || '',
+          price: Number(body.price) || 0,
+          image: body.image || '/images/products/real_dvoyka_sportchic_navy.jpg',
+          imagePosition: body.imagePosition || { x: 50, y: 50 }
+        };
+        looks.push(newLook);
+        settings.looks = looks;
+        await setStoredSettings(settings);
+        return { statusCode: 201, headers, body: JSON.stringify({ success: true, look: newLook, looks }) };
+      }
+
+      if (method === 'PUT') {
+        const idFromPath = pathname.replace('/api/looks/', '').replace('/api/looks', '');
+        const targetId = idFromPath || body.id;
+
+        if (Array.isArray(body)) {
+          settings.looks = body;
+          await setStoredSettings(settings);
+          return { statusCode: 200, headers, body: JSON.stringify({ success: true, looks: settings.looks }) };
+        }
+
+        const idx = looks.findIndex(l => l.id === targetId);
+        if (idx !== -1) {
+          looks[idx] = {
+            ...looks[idx],
+            ...body,
+            imagePosition: body.imagePosition || looks[idx].imagePosition || { x: 50, y: 50 }
+          };
+          settings.looks = looks;
+          await setStoredSettings(settings);
+          return { statusCode: 200, headers, body: JSON.stringify({ success: true, look: looks[idx], looks }) };
+        }
+        return { statusCode: 404, headers, body: JSON.stringify({ error: "Obraz topilmadi" }) };
+      }
+
+      if (method === 'DELETE') {
+        const idFromPath = pathname.replace('/api/looks/', '').replace('/api/looks', '');
+        const idFromQuery = event.queryStringParameters?.id;
+        const targetId = idFromPath || idFromQuery || body?.id;
+
+        settings.looks = looks.filter(l => l.id !== targetId);
+        await setStoredSettings(settings);
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, looks: settings.looks }) };
       }
     }
 

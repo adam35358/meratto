@@ -283,7 +283,7 @@ export async function handleApiRequest(req, res, env = {}) {
     }
   }
 
-  // 4. Site Settings & Dynamic Categories & Phone Numbers
+  // 4. Site Settings & Dynamic Categories & Visuals
   if (pathname === '/api/settings') {
     if (method === 'GET') {
       sendJson(res, 200, readSettings());
@@ -296,10 +296,84 @@ export async function handleApiRequest(req, res, env = {}) {
         ...current,
         ...body,
         categories: body.categories || current.categories,
-        contacts: body.contacts || current.contacts
+        contacts: body.contacts || current.contacts,
+        branches: body.branches || current.branches,
+        testimonials: body.testimonials || current.testimonials,
+        looks: body.looks || current.looks,
+        hero: body.hero || current.hero
       };
       writeSettings(updated);
       sendJson(res, 200, { success: true, settings: updated });
+      return true;
+    }
+  }
+
+  // 4b. Looks / Outfits Management (/api/looks)
+  if (pathname === '/api/looks' || pathname.startsWith('/api/looks/')) {
+    const settings = readSettings();
+    let looks = settings.looks || [];
+
+    if (method === 'GET') {
+      sendJson(res, 200, looks);
+      return true;
+    }
+
+    if (method === 'POST') {
+      const body = await readBody(req);
+      const lookId = body.id || `look_${Date.now()}`;
+      const newLook = {
+        id: lookId,
+        tag: body.tag || 'OFIS & BIZNES UCHRASHUV',
+        title: body.title || 'Smart Casual To\'plam',
+        desc: body.desc || '',
+        price: Number(body.price) || 0,
+        image: body.image || '/images/products/real_dvoyka_sportchic_navy.jpg',
+        imagePosition: body.imagePosition || { x: 50, y: 50 }
+      };
+      looks.push(newLook);
+      settings.looks = looks;
+      writeSettings(settings);
+      sendJson(res, 201, { success: true, look: newLook, looks });
+      return true;
+    }
+
+    if (method === 'PUT') {
+      const idFromPath = pathname.replace('/api/looks/', '').replace('/api/looks', '');
+      const body = await readBody(req);
+      const targetId = idFromPath || body.id;
+
+      if (Array.isArray(body)) {
+        settings.looks = body;
+        writeSettings(settings);
+        sendJson(res, 200, { success: true, looks: settings.looks });
+        return true;
+      }
+
+      const idx = looks.findIndex(l => l.id === targetId);
+      if (idx !== -1) {
+        looks[idx] = {
+          ...looks[idx],
+          ...body,
+          imagePosition: body.imagePosition || looks[idx].imagePosition || { x: 50, y: 50 }
+        };
+        settings.looks = looks;
+        writeSettings(settings);
+        sendJson(res, 200, { success: true, look: looks[idx], looks });
+        return true;
+      }
+      sendJson(res, 404, { success: false, error: "Obraz topilmadi" });
+      return true;
+    }
+
+    if (method === 'DELETE') {
+      const idFromPath = pathname.replace('/api/looks/', '').replace('/api/looks', '');
+      const idFromQuery = url.searchParams.get('id');
+      const body = await readBody(req);
+      const targetId = idFromPath || idFromQuery || body.id;
+
+      settings.looks = looks.filter(l => l.id !== targetId);
+      writeSettings(settings);
+      sendJson(res, 200, { success: true, looks: settings.looks });
       return true;
     }
   }

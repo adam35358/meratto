@@ -122,6 +122,48 @@
       "comment": "De Franko butikining atmosferasi va kiyimlarining didi juda yoqdi. Ayniqsa kuzgi mavsumiy palto va loferlar nihoyatda chiroyli ekan. Rahmat sizlarga!"
     }
   ],
+  "looks": [
+    {
+      "id": "business",
+      "tag": "OFIS & BIZNES UCHRASHUV",
+      "title": "To'q Ko'k Dvoyka + Oq Oxford Ko'ylak + Tabiiy Charm Loferlar",
+      "desc": "Hamkorlar bilan muzokaralar va nufuzli tadbirlar uchun. Salobatli, jiddiy va ortiqcha dabdabasiz.",
+      "price": 1450000,
+      "image": "/images/products/real_dvoyka_sportchic_navy.jpg",
+      "imagePosition": { "x": 50, "y": 30 }
+    },
+    {
+      "id": "evening",
+      "tag": "KECHKI BAZM & RESTORAN",
+      "title": "Shokolad Melanj Dvoyka + Qora Sviter + Bordo Ipak Ro'molcha",
+      "desc": "Kechki uchrashuv va shinam restorandagi kechki ovqat uchun hashamatli iliq ranglar uyg'unligi.",
+      "price": 1650000,
+      "image": "/images/products/real_jacket_cucinelli_wool.jpg",
+      "imagePosition": { "x": 50, "y": 40 }
+    },
+    {
+      "id": "weekend",
+      "tag": "DAM OLISH & SAYOHAT",
+      "title": "Aviator Mo'ynali Kurtka + Dark Indigo Djinsi + Oq Tagcharmli Poyabzal",
+      "desc": "Avtomobilda harakatlanish, oilaviy sayr va sayohatlarda maksimal erkinlik va zamonaviy uslub.",
+      "price": 1850000,
+      "image": "/images/products/real_coat_cashmere_black.jpg",
+      "imagePosition": { "x": 50, "y": 35 }
+    }
+  ],
+  "hero": {
+    "eyebrow": "DIRECT ACCESS // 2026 SMART CASUAL COLLECTION",
+    "titleLine1": "O'z uslubingizni",
+    "titleHighlight": "mukammallikka",
+    "titleLine2": "yetkazing.",
+    "subtitle": "Meratto & De Franko — Toshkentdagi 3 ta zamonaviy premium filiallar tarmog'i. Yuqori italyancha did va qomatga mukammal o'tiruvchi Smart Casual kiyimlar, dvoykalar va eksklyuziv aksessuarlar.",
+    "badgeText": "MRT-DV-01 // READY IN STORE",
+    "showcaseTitle": "Sport-Chic Dvoyka To'plami",
+    "showcasePrice": 980000,
+    "showcaseImage": "/images/products/real_dvoyka_sportchic_navy.jpg",
+    "announcement": "🔥 Yangi 2026 Bahorgi Kolleksiya barcha 3 ta do'konimizda sotuvda! Toshkent bo'ylab bepul tezkor kuryer yetkazib berish xizmati mavjud.",
+    "announcementActive": true
+  },
   "customers": [
     {
       "id": "cust_101",
