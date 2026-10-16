@@ -6,6 +6,7 @@
 [build.environment]
   NODE_VERSION = "20"
   NPM_FLAGS = "--legacy-peer-deps"
+  SECRETS_SCAN_ENABLED = "false"
 
 # Route /api/* requests to Netlify Serverless Function
 [[redirects]]

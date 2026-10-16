@@ -492,7 +492,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                 </button>
               </div>
               <p className="text-[11px] text-[#6b7280] mt-1.5">
-                Boshlang'ich parol: <code className="text-[#E5C378]">meratto2026</code>
+                Maxfiy admin parolini kiriting
               </p>
             </div>
 
