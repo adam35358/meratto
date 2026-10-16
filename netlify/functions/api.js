@@ -1,23 +1,16 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 import { getStore } from '@netlify/blobs';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
+const fallbackProducts = require('../../src/data/products.json');
+const fallbackSettings = require('../../src/data/siteSettings.json');
 
 // Helper to get fallback data from repo
 function getFallbackData() {
-  try {
-    const productsPath = path.resolve(__dirname, '../../src/data/products.json');
-    const settingsPath = path.resolve(__dirname, '../../src/data/siteSettings.json');
-    const products = fs.existsSync(productsPath) ? JSON.parse(fs.readFileSync(productsPath, 'utf8')) : [];
-    const settings = fs.existsSync(settingsPath) ? JSON.parse(fs.readFileSync(settingsPath, 'utf8')) : { categories: [], contacts: {} };
-    return { products, settings };
-  } catch (err) {
-    console.error('[Netlify Function] Fallback read error:', err.message);
-    return { products: [], settings: { categories: [], contacts: {} } };
-  }
+  return {
+    products: Array.isArray(fallbackProducts) ? fallbackProducts : [],
+    settings: fallbackSettings || { categories: [], contacts: {} }
+  };
 }
 
 // Netlify Blob helpers for Products
