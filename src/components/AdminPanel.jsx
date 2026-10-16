@@ -307,7 +307,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       id: '',
       name: '',
       brand: 'Meratto',
-      badge: `NODE 0${branches.length + 1} // YANGI FILIAL`,
+      badge: 'Yangi Filial',
       address: '',
       landmark: '',
       phones: ['+998 98 311 33 37'],
@@ -526,10 +526,22 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
   };
 
   // 6. Modal Open for Create / Edit
+  const getBranchIds = () => {
+    return branches.length > 0
+      ? branches.map(b => b.id)
+      : ['meratto-qoratosh', 'meratto-chilonzor', 'de-franko-qoratosh'];
+  };
+
   const handleOpenEdit = (product) => {
+    const allBranchIds = getBranchIds();
+    const prodBranches = Array.isArray(product.availableBranches) && product.availableBranches.length > 0
+      ? product.availableBranches
+      : allBranchIds;
+
     setEditingProduct({
       ...product,
       code: product.code || product.modelCode || `MRT-${Math.floor(100 + Math.random() * 900)}`,
+      availableBranches: prodBranches,
       nameUz: product.name?.uz || (typeof product.name === 'string' ? product.name : ''),
       nameRu: product.name?.ru || '',
       descUz: product.description?.uz || (typeof product.description === 'string' ? product.description : ''),
@@ -549,9 +561,11 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
   };
 
   const handleOpenCreate = () => {
+    const allBranchIds = getBranchIds();
     setEditingProduct({
       id: '',
       code: `MRT-${Math.floor(100 + Math.random() * 900)}`,
+      availableBranches: allBranchIds,
       nameUz: '',
       nameRu: '',
       descUz: '',
@@ -631,10 +645,14 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
     }
 
     const productCode = (editingProduct.code || `MRT-${Math.floor(100 + Math.random() * 900)}`).trim();
+    const allBranchIds = getBranchIds();
     const payload = {
       id: editingProduct.id || undefined,
       code: productCode,
       modelCode: productCode,
+      availableBranches: Array.isArray(editingProduct.availableBranches) && editingProduct.availableBranches.length > 0
+        ? editingProduct.availableBranches
+        : allBranchIds,
       category: editingProduct.category || 'dvoyka',
       name: {
         uz: editingProduct.nameUz,
@@ -1096,7 +1114,10 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                               {categoryName}
                             </span>
                             <div className="text-right">
-                              <span className={`text-base font-semibold ${formattedOldPrice ? 'text-red-500 font-bold' : 'text-white'}`}>
+                              <span
+                                className={formattedOldPrice ? "text-base font-bold price-discount-active" : "text-base font-semibold text-white price-regular-active"}
+                                style={{ color: formattedOldPrice ? '#ef4444' : '#ffffff' }}
+                              >
                                 {formattedPrice}
                               </span>
                               {formattedOldPrice && (
@@ -1117,11 +1138,21 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                         </div>
 
                         <div className="pt-3 border-t border-white/5 flex items-center justify-between gap-2">
-                          <div className="text-[11px] text-[#6b7280] truncate">
-                            {Array.isArray(p.sizes) ? p.sizes.join(' · ') : ''}
+                          <div className="space-y-1 min-w-0 flex-1">
+                            <div className="text-[11px] text-[#6b7280] truncate">
+                              {Array.isArray(p.sizes) ? p.sizes.join(' · ') : ''}
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#8f96a0] truncate">
+                              <Building className="w-3 h-3 text-[#E5C378] shrink-0" />
+                              <span>
+                                {Array.isArray(p.availableBranches) && p.availableBranches.length > 0
+                                  ? (p.availableBranches.length >= (branches.length || 3) ? "3 la do'konda bor" : `${p.availableBranches.length} ta do'konda`)
+                                  : "3 la do'konda bor"}
+                              </span>
+                            </div>
                           </div>
 
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 shrink-0">
                             <button
                               onClick={() => handleOpenEdit(p)}
                               className="p-2 rounded-xl bg-[#16181f] text-[#E5C378] hover:bg-[#E5C378] hover:text-[#07080a] transition-all"
@@ -1465,7 +1496,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                     <div className="relative aspect-[16/10] bg-black/60 overflow-hidden">
                       <img src={b.image} alt={b.name} className="w-full h-full object-cover" />
                       <div className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-black/70 border border-white/10 font-mono text-[9px] uppercase tracking-wider text-[#E5C378]">
-                        {b.badge || `NODE 0${idx + 1}`}
+                        {b.badge || b.name}
                       </div>
                       <div className="absolute bottom-2.5 right-3 font-mono text-[9px] text-[#4fc79a] bg-black/70 px-2 py-0.5 rounded-full border border-white/10">
                         {b.status || 'OCHIQ'}
@@ -1738,15 +1769,18 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono uppercase tracking-wider text-[#8f96a0] mb-1.5 flex items-center justify-between">
-                      <span>Kiyim Kodi / Artikul</span>
-                      <span className="text-[10px] text-[#E5C378] font-normal lowercase">(model kodi)</span>
+                    <label className="block text-xs font-mono uppercase tracking-wider text-[#E5C378] mb-1.5 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5">
+                        <Tag className="w-3.5 h-3.5 text-[#E5C378]" />
+                        <span>Kiyim Kodi / Artikul (Masalan: MRT-042)</span>
+                      </span>
+                      <span className="text-[10px] text-[#8f96a0] font-normal lowercase">(model kodi)</span>
                     </label>
                     <input
                       type="text"
                       value={editingProduct.code || ''}
                       onChange={(e) => setEditingProduct({ ...editingProduct, code: e.target.value })}
-                      placeholder="Masalan: MRT-042 yoki MRT-108"
+                      placeholder="Masalan: MRT-042"
                       className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-[#555a64] font-mono focus:outline-none focus:border-[#E5C378]"
                     />
                   </div>
@@ -1825,38 +1859,65 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                       </button>
                     </div>
 
-                    {showQuickAddCat ? (
-                      <div className="p-2.5 rounded-xl bg-[#0e1015] border border-[#E5C378]/30 space-y-2 animate-fade-in">
-                        <span className="text-[11px] text-[#E5C378] font-mono block">Yangi bo'lim nomini yozing:</span>
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            type="text"
-                            value={quickCatName}
-                            onChange={(e) => setQuickCatName(e.target.value)}
-                            placeholder="Masalan: Pidjaklar..."
-                            className="flex-1 bg-[#16181f] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-[#555] focus:outline-none focus:border-[#E5C378]"
-                          />
-                          <button
-                            type="button"
-                            disabled={quickCatLoading || !quickCatName.trim()}
-                            onClick={handleQuickCreateCategory}
-                            className="px-3 py-1.5 rounded-lg bg-[#E5C378] text-[#07080a] font-semibold text-xs hover:brightness-110 disabled:opacity-50 shrink-0"
-                          >
-                            {quickCatLoading ? '...' : "Qo'shish"}
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
+                    <div className="space-y-2">
                       <select
-                        value={editingProduct.category}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
+                        value={showQuickAddCat ? '__ADD_NEW__' : editingProduct.category}
+                        onChange={(e) => {
+                          if (e.target.value === '__ADD_NEW__') {
+                            setShowQuickAddCat(true);
+                          } else {
+                            setShowQuickAddCat(false);
+                            setEditingProduct({ ...editingProduct, category: e.target.value });
+                          }
+                        }}
                         className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-[#E5C378]"
                       >
                         {categories.map(c => (
                           <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
+                        <option disabled value="__DIVIDER__">──────────────</option>
+                        <option value="__ADD_NEW__" className="font-semibold text-[#E5C378]">➕ Yangi kategoriya qo'shish...</option>
                       </select>
-                    )}
+
+                      {showQuickAddCat && (
+                        <div className="p-2.5 rounded-xl bg-[#0e1015] border border-[#E5C378]/30 space-y-2 animate-fade-in">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] text-[#E5C378] font-mono">Yangi bo'lim nomini yozing:</span>
+                            <button
+                              type="button"
+                              onClick={() => setShowQuickAddCat(false)}
+                              className="text-[10px] text-[#8f96a0] hover:text-white"
+                            >
+                              Bekor qilish
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <input
+                              type="text"
+                              value={quickCatName}
+                              onChange={(e) => setQuickCatName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleQuickCreateCategory();
+                                }
+                              }}
+                              placeholder="Masalan: Pidjaklar..."
+                              autoFocus
+                              className="flex-1 bg-[#16181f] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-[#555] focus:outline-none focus:border-[#E5C378]"
+                            />
+                            <button
+                              type="button"
+                              disabled={quickCatLoading || !quickCatName.trim()}
+                              onClick={handleQuickCreateCategory}
+                              className="px-3 py-1.5 rounded-lg bg-[#E5C378] text-[#07080a] font-semibold text-xs hover:brightness-110 disabled:opacity-50 shrink-0"
+                            >
+                              {quickCatLoading ? '...' : "Qo'shish"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -1886,6 +1947,83 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                       placeholder="M (48), L (50), XL (52)"
                       className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-[#555a64] focus:outline-none focus:border-[#E5C378]"
                     />
+                  </div>
+                </div>
+
+                {/* Store Availability Multi-Select (Do'konlarni tanlash) */}
+                <div className="p-4 rounded-xl bg-[#16181f] border border-white/10 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div>
+                      <label className="block text-xs font-mono uppercase tracking-wider text-[#E5C378] flex items-center gap-1.5 font-medium">
+                        <Building className="w-3.5 h-3.5 text-[#E5C378]" />
+                        <span>Mavjud Bo'lgan Do'konlar (Filiallar) *</span>
+                      </label>
+                      <span className="text-[11px] text-[#8f96a0]">
+                        Ushbu kiyim qaysi filialda sotuvda borligini belgilang. Agar 3 la do'konda ham bor bo'lsa barchasini tanlang:
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const allIds = branches.length > 0 ? branches.map(b => b.id) : ['meratto-qoratosh', 'meratto-chilonzor', 'de-franko-qoratosh'];
+                          setEditingProduct({ ...editingProduct, availableBranches: allIds });
+                        }}
+                        className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-[#E5C378]/15 text-[#E5C378] hover:bg-[#E5C378]/25 border border-[#E5C378]/30 transition-all font-medium"
+                      >
+                        ✓ 3 la do'konni tanlash
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingProduct({ ...editingProduct, availableBranches: [] })}
+                        className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-white/5 text-[#8f96a0] hover:text-white border border-white/10 transition-all"
+                      >
+                        Tozalash
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
+                    {(branches.length > 0 ? branches : [
+                      { id: 'meratto-qoratosh', name: 'Meratto Qoratosh', brand: 'Meratto', badge: "Bosh do'kon" },
+                      { id: 'meratto-chilonzor', name: 'Meratto Chilonzor', brand: 'Meratto', badge: 'Chilonzor filiali' },
+                      { id: 'de-franko-qoratosh', name: 'De Franko Qoratosh', brand: 'De Franko', badge: 'Eksklyuziv butik' }
+                    ]).map(branch => {
+                      const isChecked = Array.isArray(editingProduct.availableBranches) && editingProduct.availableBranches.includes(branch.id);
+                      return (
+                        <button
+                          key={branch.id}
+                          type="button"
+                          onClick={() => {
+                            const cur = Array.isArray(editingProduct.availableBranches) ? [...editingProduct.availableBranches] : [];
+                            const next = isChecked ? cur.filter(id => id !== branch.id) : [...cur, branch.id];
+                            setEditingProduct({ ...editingProduct, availableBranches: next });
+                          }}
+                          className={`p-3 rounded-xl border text-left transition-all flex items-center justify-between gap-3 ${
+                            isChecked
+                              ? 'bg-[#E5C378]/15 border-[#E5C378] text-white shadow-sm ring-1 ring-[#E5C378]/40'
+                              : 'bg-[#0e1015] border-white/10 text-[#8f96a0] hover:border-white/20 hover:text-white'
+                          }`}
+                        >
+                          <div className="min-w-0">
+                            <div className={`text-xs font-medium truncate ${isChecked ? 'text-[#E5C378]' : 'text-white'}`}>
+                              {branch.name}
+                            </div>
+                            <div className="text-[10px] font-mono text-[#8f96a0] truncate">
+                              {branch.badge || branch.brand}
+                            </div>
+                          </div>
+                          <div className={`w-5 h-5 rounded-md flex items-center justify-center border shrink-0 transition-all ${
+                            isChecked
+                              ? 'bg-[#E5C378] border-[#E5C378] text-[#07080a]'
+                              : 'border-white/20 bg-transparent text-transparent'
+                          }`}>
+                            <Check className="w-3.5 h-3.5 stroke-[3]" />
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -2035,7 +2173,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                     type="text"
                     value={editingBranch.badge || ''}
                     onChange={(e) => setEditingBranch({ ...editingBranch, badge: e.target.value })}
-                    placeholder="Masalan: NODE 01 // BOSH DO'KON"
+                    placeholder="Masalan: Bosh do'kon yoki Chilonzor filiali"
                     className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-[#E5C378]"
                   />
                   <span className="text-[10px] text-[#555a64] block">Karta ustidagi qora tasmada aynan shu yozuv ko'rinadi</span>

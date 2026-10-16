@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { X, ShoppingBag, Zap, Check, ShieldCheck, MapPin } from 'lucide-react';
+import { X, ShoppingBag, Zap, Check, ShieldCheck, MapPin, Store } from 'lucide-react';
+import { branches } from '../data/branches';
 
 export default function ProductModal({ product, isOpen, onClose, lang, t, onAddToCart, onQuickOrder }) {
   if (!isOpen || !product) return null;
@@ -108,16 +109,28 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
               <div className="mt-4 flex items-baseline gap-3">
                 {product.oldPrice && Number(product.oldPrice) > 0 ? (
                   <>
-                    <span className="text-2xl sm:text-3xl font-mono font-medium text-red-500">
-                      {formatPrice(product.price)} <span className="text-xs font-mono tracking-wider text-red-400">{t.catalog.price}</span>
+                    <span 
+                      style={{ color: '#ef4444' }} 
+                      className="text-2xl sm:text-3xl font-mono font-bold price-discount-active"
+                    >
+                      {formatPrice(product.price)}{' '}
+                      <span style={{ color: '#f87171' }} className="text-xs font-mono tracking-wider price-currency-discount">
+                        {t.catalog.price}
+                      </span>
                     </span>
                     <span className="text-sm font-mono text-[#8f96a0] line-through">
                       {formatPrice(product.oldPrice)}
                     </span>
                   </>
                 ) : (
-                  <span className="text-2xl sm:text-3xl font-mono font-normal text-white">
-                    {formatPrice(product.price)} <span className="text-xs font-mono tracking-wider text-woufx-muted">{t.catalog.price}</span>
+                  <span 
+                    style={{ color: '#ffffff' }} 
+                    className="text-2xl sm:text-3xl font-mono font-normal text-white price-regular-active"
+                  >
+                    {formatPrice(product.price)}{' '}
+                    <span className="text-xs font-mono tracking-wider text-woufx-muted">
+                      {t.catalog.price}
+                    </span>
                   </span>
                 )}
               </div>
@@ -137,6 +150,35 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
                   </div>
                 </div>
               )}
+
+              {/* Store Availability */}
+              <div className="mt-4 p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-2">
+                <div className="flex items-center gap-2 text-xs font-mono text-[#E5C378]">
+                  <Store className="w-4 h-4" />
+                  <span className="uppercase tracking-wider font-medium">Ushbu mahsulot mavjud do'konlar:</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                  {branches.map(branch => {
+                    const isInStock = !Array.isArray(product.availableBranches) || product.availableBranches.length === 0 || product.availableBranches.includes(branch.id);
+                    return (
+                      <div 
+                        key={branch.id}
+                        className={`p-2.5 rounded-xl border flex items-center gap-2 font-mono text-xs transition-all ${
+                          isInStock
+                            ? 'bg-[#E5C378]/10 border-[#E5C378]/40 text-[#E5C378]'
+                            : 'bg-white/[0.01] border-white/5 text-[#555a64] opacity-50'
+                        }`}
+                      >
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${isInStock ? 'bg-[#4fc79a] animate-pulse' : 'bg-red-500/50'}`} />
+                        <div className="truncate">
+                          <div className="text-white font-medium text-[11px] truncate">{branch.name}</div>
+                          <div className="text-[9px] text-[#8f96a0]">{isInStock ? 'Mavjud (Bor)' : 'Mavjud emas'}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
               {/* Size Selector */}
               <div className="mt-6">

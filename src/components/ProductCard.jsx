@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Eye, ShoppingBag, Zap, Check, Sparkles } from 'lucide-react';
+import { Eye, ShoppingBag, Zap, Check, Sparkles, Store } from 'lucide-react';
 
 export default function ProductCard({ product, lang, t, onQuickView, onAddToCart, onQuickOrder, isAdded, index = 0 }) {
   const cardRef = useRef(null);
@@ -141,6 +141,19 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
             <p className="text-xs text-[#8f96a0] mt-1 line-clamp-2 leading-relaxed font-normal">
               {product.description[lang] || product.description.uz}
             </p>
+
+            {/* Model code & Available branches */}
+            <div className="mt-2 pt-2 border-t border-white/[0.04] flex items-center justify-between text-[10px] font-mono text-[#8f96a0]">
+              <span className="text-[#E5C378]">{product.code || product.modelCode || ''}</span>
+              <span className="text-[#8f96a0] flex items-center gap-1 truncate max-w-[180px]" title="Mavjud do'konlar">
+                <Store className="w-3 h-3 text-[#E5C378] shrink-0" />
+                <span className="truncate">
+                  {Array.isArray(product.availableBranches) && product.availableBranches.length > 0
+                    ? (product.availableBranches.length === 3 ? "3 ta do'konda" : product.availableBranches.map(id => id.replace('meratto-', '').replace('-qoratosh', '').replace('-', ' ').toUpperCase()).join(', '))
+                    : "3 ta do'konda"}
+                </span>
+              </span>
+            </div>
           </div>
 
           {/* Price & Action Row */}
@@ -149,16 +162,28 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
               <div>
                 {product.oldPrice && Number(product.oldPrice) > 0 ? (
                   <>
-                    <div className="font-display text-xl sm:text-2xl font-medium text-red-500 tracking-tight">
-                      {formatPrice(product.price)} <span className="font-mono text-xs text-red-400 font-normal">{t.catalog.price || "UZS"}</span>
+                    <div 
+                      style={{ color: '#ef4444' }} 
+                      className="font-display text-xl sm:text-2xl font-bold tracking-tight price-discount-active"
+                    >
+                      {formatPrice(product.price)}{' '}
+                      <span style={{ color: '#f87171' }} className="font-mono text-xs font-normal price-currency-discount">
+                        {t.catalog.price || "UZS"}
+                      </span>
                     </div>
                     <div className="font-mono text-[11px] text-[#8f96a0] line-through -mt-0.5">
                       {formatPrice(product.oldPrice)} {t.catalog.price || "UZS"}
                     </div>
                   </>
                 ) : (
-                  <div className="font-display text-xl sm:text-2xl font-light text-white tracking-tight">
-                    {formatPrice(product.price)} <span className="font-mono text-xs text-[#8f96a0] font-normal">{t.catalog.price || "UZS"}</span>
+                  <div 
+                    style={{ color: '#ffffff' }} 
+                    className="font-display text-xl sm:text-2xl font-light text-white tracking-tight price-regular-active"
+                  >
+                    {formatPrice(product.price)}{' '}
+                    <span className="font-mono text-xs text-[#8f96a0] font-normal">
+                      {t.catalog.price || "UZS"}
+                    </span>
                   </div>
                 )}
               </div>

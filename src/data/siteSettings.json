@@ -41,7 +41,7 @@
       "id": "meratto-qoratosh",
       "name": "Meratto Qoratosh",
       "brand": "Meratto",
-      "badge": "NODE 01 // BOSH DO'KON",
+      "badge": "Bosh do'kon",
       "address": "Qoratosh ko'chasi, 5B-uy",
       "landmark": "Samarqand Darvoza savdo markazidan o'tganda",
       "phones": [
@@ -57,7 +57,7 @@
       "id": "meratto-chilonzor",
       "name": "Meratto Chilonzor",
       "brand": "Meratto",
-      "badge": "NODE 02 // CHILONZOR FILIALI",
+      "badge": "Chilonzor filiali",
       "address": "Qatortol ko'chasi, S kvartal 14",
       "landmark": "Qatortol savdo majmuasi va Chilonzor metrosi yaqinida",
       "phones": [
@@ -73,7 +73,7 @@
       "id": "de-franko-qoratosh",
       "name": "De Franko",
       "brand": "De Franko",
-      "badge": "NODE 03 // EKSKLYUZIV BUTIK",
+      "badge": "Eksklyuziv butik",
       "address": "Qoratosh ko'chasi, 65-uy",
       "landmark": "Qoratosh markaziy yo'li bo'yida",
       "phones": [

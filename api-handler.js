@@ -164,6 +164,9 @@ export async function handleApiRequest(req, res, env = {}) {
         oldPrice: body.oldPrice ? Number(body.oldPrice) : null,
         badge: body.badge || 'New',
         modelCode: body.modelCode || body.code || 'MRT-NEW',
+        availableBranches: Array.isArray(body.availableBranches) && body.availableBranches.length > 0
+          ? body.availableBranches
+          : ['meratto-qoratosh', 'meratto-chilonzor', 'de-franko-qoratosh'],
         image: body.image || '/images/products/placeholder.jpg',
         images: Array.isArray(body.images) && body.images.length > 0 ? body.images : [body.image || '/images/products/placeholder.jpg'],
         description: typeof body.description === 'object' ? body.description : { uz: body.description || '', ru: '', en: '' },

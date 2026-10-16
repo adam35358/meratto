@@ -67,13 +67,13 @@ export default function Footer({ t, contacts = {} }) {
           {/* Filial 1 & 2 Contact */}
           <div className="space-y-3 font-mono text-xs">
             <h4 className="font-mono text-white text-[11px] uppercase tracking-[0.18em]">
-              02 // MERATTO NODES
+              02 // MERATTO FILIALLARI
             </h4>
             <div className="space-y-3 text-woufx-muted">
               <div>
                 <div className="text-white font-normal flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <span>Node 01: Qoratosh 5B</span>
+                  <span>Bosh do'kon: Qoratosh 5B</span>
                 </div>
                 <a href={`tel:${node1Phone.replace(/\s+/g, '')}`} className="text-woufx-muted hover:text-white transition-colors">
                   {node1Phone}
@@ -82,7 +82,7 @@ export default function Footer({ t, contacts = {} }) {
               <div className="pt-2 border-t border-white/[0.06]">
                 <div className="text-white font-normal flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <span>Node 02: Chilonzor S-14</span>
+                  <span>Chilonzor filiali: Chilonzor S-14</span>
                 </div>
                 <a href={`tel:${node2Phone.replace(/\s+/g, '')}`} className="text-woufx-muted hover:text-white transition-colors">
                   {node2Phone}
@@ -100,7 +100,7 @@ export default function Footer({ t, contacts = {} }) {
               <div>
                 <div className="text-white font-normal flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <span>Node 03: Qoratosh 65</span>
+                  <span>Eksklyuziv butik: Qoratosh 65</span>
                 </div>
                 <a href={`tel:${node3Phone.replace(/\s+/g, '')}`} className="text-woufx-muted hover:text-white transition-colors">
                   {node3Phone}
@@ -118,7 +118,7 @@ export default function Footer({ t, contacts = {} }) {
         <div className="mt-14 pt-6 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4 text-woufx-subtle font-mono text-[11px] tracking-[0.14em]">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span>ALL NODES OPERATIONAL &bull; TASHKENT, UZ</span>
+            <span>DO'KONLAR FAOL &bull; TASHKENT, UZ</span>
           </div>
           <div className="flex items-center gap-4">
             <div>

@@ -26,6 +26,18 @@
   }
 }
 
+/* Special Discount Price Styling */
+.price-discount-active {
+  color: #ef4444 !important;
+  font-weight: 600 !important;
+}
+.price-currency-discount {
+  color: #f87171 !important;
+}
+.price-regular-active {
+  color: #ffffff !important;
+}
+
 /* WOUFX Minimalist Tech Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;

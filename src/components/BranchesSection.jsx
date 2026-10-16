@@ -80,7 +80,7 @@ export default function BranchesSection({ lang, t, branchesData = [] }) {
                   <div className="absolute inset-0 bg-gradient-to-t from-[#07080a] via-transparent to-transparent opacity-80" />
                   
                   <div className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-[#07080a]/80 border border-white/10 backdrop-blur-md font-mono text-[9px] uppercase tracking-wider text-[#E5C378]">
-                    {branch.badge || `NODE 0${idx + 1}`}
+                    {branch.badge || branch.name}
                   </div>
 
                   <div className="absolute bottom-2.5 right-3 flex items-center gap-1.5 font-mono text-[9px] text-[#4fc79a] bg-[#07080a]/80 px-2 py-0.5 rounded-full border border-white/10">
