@@ -1,6 +1,10 @@
 {
   "categories": [
     {
+      "id": "look",
+      "name": "Tayyor Looklar"
+    },
+    {
       "id": "dvoyka",
       "name": "Dvoykalar"
     },
@@ -116,6 +120,30 @@
       "outfit": "Yengil Palto + Kardigan + Charm Kamar",
       "avatar": "/images/avatars/avatar_bekzod.jpg",
       "comment": "De Franko butikining atmosferasi va kiyimlarining didi juda yoqdi. Ayniqsa kuzgi mavsumiy palto va loferlar nihoyatda chiroyli ekan. Rahmat sizlarga!"
+    }
+  ],
+  "customers": [
+    {
+      "id": "cust_101",
+      "name": "Jamshid Aliyev",
+      "phone": "+998 90 123 45 67",
+      "firstOrderDate": "17/10/2026, 02:27:51",
+      "lastOrderDate": "17/10/2026, 02:27:51",
+      "ordersCount": 1,
+      "totalSpent": 2200000,
+      "notes": "Iltimos tezroq yetkazing",
+      "orders": [
+        {
+          "orderId": "ord_101",
+          "date": "17/10/2026, 02:27:51",
+          "products": "1. Dvoyka to'q ko'k (211235) 1 x 750 000, 2. Baza futbolka (236759) 2 x 250 000 = 500 000, 3. Krasovka (7558) 1 x 950 000",
+          "total": 2200000,
+          "deliveryType": "Kuryer orqali yetkazish",
+          "paymentType": "Click / Payme",
+          "branch": "Meratto Qoratosh",
+          "notes": "Iltimos tezroq yetkazing"
+        }
+      ]
     }
   ]
 }

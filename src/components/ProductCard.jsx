@@ -185,6 +185,19 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
                 </span>
               </span>
             </div>
+
+            {/* Look Items Summary Pill */}
+            {product.lookItems && product.lookItems.length > 0 && (
+              <div className="mt-2 p-2 rounded-xl bg-[#E5C378]/5 border border-[#E5C378]/20 text-[10px] space-y-1">
+                <div className="font-mono text-[#E5C378] font-medium flex items-center gap-1 text-[9px] uppercase tracking-wider">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  <span>Komplekt tarkibi ({product.lookItems.length} ta):</span>
+                </div>
+                <div className="text-[#eef0f3] text-[10px] truncate font-sans">
+                  {product.lookItems.map(i => `${i.name} (${formatPrice(i.price)} so'm)`).join(' • ')}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Price & Action Row */}

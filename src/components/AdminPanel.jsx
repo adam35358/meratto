@@ -1365,6 +1365,9 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                             src={p.image} 
                             alt={name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            style={{
+                              objectPosition: `${p.imagePosition?.x ?? 50}% ${p.imagePosition?.y ?? 50}%`
+                            }}
                             onError={(e) => {
                               e.target.onerror = null;
                               e.target.src = 'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?auto=format&fit=crop&w=600&q=80';
@@ -1376,14 +1379,29 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                           </div>
                         )}
 
-                        {p.badge && (
-                          <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-[#07080a]/80 backdrop-blur-md border border-[#E5C378]/30 text-[#E5C378] text-[10px] font-mono font-medium uppercase">
-                            {p.badge}
-                          </div>
-                        )}
+                        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5 items-center">
+                          {(p.isLook || (p.lookItems && p.lookItems.length > 0)) && (
+                            <div className="px-2 py-0.5 rounded-lg bg-[#E5C378]/25 backdrop-blur-md border border-[#E5C378]/50 text-[#E5C378] text-[10px] font-mono font-bold uppercase flex items-center gap-1">
+                              <Sparkles className="w-2.5 h-2.5" />
+                              <span>LOOK ({p.lookItems?.length || 0})</span>
+                            </div>
+                          )}
+                          {p.badge && (
+                            <div className="px-2.5 py-1 rounded-lg bg-[#07080a]/80 backdrop-blur-md border border-[#E5C378]/30 text-[#E5C378] text-[10px] font-mono font-medium uppercase">
+                              {p.badge}
+                            </div>
+                          )}
+                        </div>
 
-                        <div className="absolute top-3 right-3 px-2 py-0.5 rounded-md bg-[#07080a]/80 backdrop-blur-md text-[#8f96a0] text-[10px] font-mono">
-                          {p.code || 'NO-CODE'}
+                        <div className="absolute top-3 right-3 flex items-center gap-1.5">
+                          {p.images && p.images.length > 1 && (
+                            <div className="px-2 py-0.5 rounded-md bg-[#07080a]/80 backdrop-blur-md text-[#E5C378] text-[10px] font-mono border border-white/10">
+                              📷 {p.images.length}
+                            </div>
+                          )}
+                          <div className="px-2 py-0.5 rounded-md bg-[#07080a]/80 backdrop-blur-md text-[#8f96a0] text-[10px] font-mono">
+                            {p.code || 'NO-CODE'}
+                          </div>
                         </div>
                       </div>
 
@@ -1415,6 +1433,17 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                           <p className="text-xs text-[#8f96a0] line-clamp-2 leading-relaxed mb-3">
                             {desc || "Tavsif mavjud emas."}
                           </p>
+
+                          {p.lookItems && p.lookItems.length > 0 && (
+                            <div className="mb-3 p-2 rounded-xl bg-white/[0.02] border border-[#E5C378]/20 text-[10px] space-y-1">
+                              <span className="font-mono text-[#E5C378] font-medium block">
+                                Komplekt qismlari ({p.lookItems.length} ta):
+                              </span>
+                              <div className="text-[#8f96a0] truncate font-sans">
+                                {p.lookItems.map(i => `${i.name} (${Number(i.price).toLocaleString('uz-UZ')} so'm)`).join(', ')}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         <div className="pt-3 border-t border-white/5 flex items-center justify-between gap-2">

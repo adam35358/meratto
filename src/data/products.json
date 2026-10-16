@@ -1,5 +1,72 @@
 [
   {
+    "id": "p-tayyor-look-complete",
+    "code": "MRT-LK-01",
+    "category": "look",
+    "name": {
+      "uz": "Meratto Tayyor Look (Dvoyka + Baza Futbolka + Krasovka)",
+      "ru": "Готовый образ Meratto (Двойка + Базовая футболка + Кроссовки)",
+      "en": "Meratto Ready Look (Suit + Base Tee + Sneakers)"
+    },
+    "price": 1635000,
+    "oldPrice": 1850000,
+    "badge": "Tayyor Look",
+    "modelCode": "MRT-LK-01",
+    "image": "/images/products/real_dvoyka_sportchic_navy.jpg",
+    "images": [
+      "/images/products/real_dvoyka_sportchic_navy.jpg",
+      "/images/products/real_dvoyka_burgundy.jpg"
+    ],
+    "imagePosition": {
+      "x": 50,
+      "y": 40
+    },
+    "isLook": true,
+    "lookItems": [
+      {
+        "id": "look_item_1",
+        "name": "Dvoyka",
+        "price": 750000
+      },
+      {
+        "id": "look_item_2",
+        "name": "Baza futbolka",
+        "price": 250000
+      },
+      {
+        "id": "look_item_3",
+        "name": "Krasovka",
+        "price": 635000
+      }
+    ],
+    "availableBranches": [
+      "meratto-qoratosh",
+      "meratto-chilonzor",
+      "de-franko-qoratosh"
+    ],
+    "description": {
+      "uz": "Maxsus tayyor look to'plami: 1) Dvoyka (750 000 so'm), 2) Baza futbolka (250 000 so'm), 3) Krasovka (635 000 so'm). Har bir kiyimni alohida yoki butun komplekt sifatida xarid qilishingiz mumkin.",
+      "ru": "Эксклюзивный готовый образ: Двойка (750 000), Базовая футболка (250 000) и Кроссовки (635 000).",
+      "en": "Exclusive complete coordinated look: Two-piece suit, Base cotton tee, and designer sneakers."
+    },
+    "fabric": {
+      "uz": "Virgin Wool to'qima + 100% Premium Paxta + Charm",
+      "ru": "Натуральная шерсть + 100% Премиум хлопок + Кожа",
+      "en": "Virgin Wool + 100% Cotton + Leather"
+    },
+    "sizes": [
+      "M (48)",
+      "L (50)",
+      "XL (52)",
+      "XXL (54)"
+    ],
+    "colors": [
+      "#101827",
+      "#1E293B"
+    ],
+    "nameUz": "Meratto Tayyor Look (Dvoyka + Baza Futbolka + Krasovka)"
+  },
+  {
     "id": "p1-dvoyka-sportchic-navy",
     "code": "MRT-DV-01",
     "category": "dvoyka",
