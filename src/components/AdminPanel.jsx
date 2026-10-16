@@ -49,6 +49,9 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
   const [modalSaving, setModalSaving] = useState(false);
   const [modalError, setModalError] = useState('');
   const [imageUploadLoading, setImageUploadLoading] = useState(false);
+  const [showQuickAddCat, setShowQuickAddCat] = useState(false);
+  const [quickCatName, setQuickCatName] = useState('');
+  const [quickCatLoading, setQuickCatLoading] = useState(false);
 
   // Category Add / Edit State
   const [newCatName, setNewCatName] = useState('');
@@ -236,6 +239,35 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
     }
   };
 
+  const handleQuickCreateCategory = async () => {
+    if (!quickCatName.trim()) return;
+    setQuickCatLoading(true);
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: quickCatName.trim() })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setCategories(data.categories);
+        if (editingProduct && data.category) {
+          setEditingProduct(prev => ({ ...prev, category: data.category.id }));
+        }
+        setQuickCatName('');
+        setShowQuickAddCat(false);
+        showToast(`"${data.category?.name || 'Yangi'}" bo'limi muvaffaqiyatli qo'shildi va tanlandi!`);
+        fetchSettings();
+      } else {
+        alert(data.error || "Bo'lim qo'shishda xatolik yuz berdi");
+      }
+    } catch (err) {
+      alert("Server xatosi: " + err.message);
+    } finally {
+      setQuickCatLoading(false);
+    }
+  };
+
   // 4. Contacts & Phone Numbers Save Handler
   const handleSaveContacts = async (e) => {
     e.preventDefault();
@@ -275,7 +307,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       id: '',
       name: '',
       brand: 'Meratto',
-      badge: "Do'kon",
+      badge: `NODE 0${branches.length + 1} // YANGI FILIAL`,
       address: '',
       landmark: '',
       phones: ['+998 98 311 33 37'],
@@ -290,6 +322,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
   const handleOpenBranchEdit = (branch) => {
     setEditingBranch({
       ...branch,
+      badge: branch.badge || '',
       address: typeof branch.address === 'object' ? (branch.address.uz || '') : (branch.address || ''),
       landmark: typeof branch.landmark === 'object' ? (branch.landmark.uz || '') : (branch.landmark || ''),
       phones: Array.isArray(branch.phones) && branch.phones.length > 0 ? [...branch.phones] : ['+998 98 311 33 37']
@@ -301,11 +334,16 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
     e.preventDefault();
     if (!editingBranch.name.trim()) return alert("Do'kon nomini kiriting");
     setBranchSaving(true);
+    const cleanPhones = (editingBranch.phones || []).map(p => p.trim()).filter(Boolean);
+    const branchToSave = {
+      ...editingBranch,
+      phones: cleanPhones.length > 0 ? cleanPhones : ['+998 98 311 33 37']
+    };
     try {
       const res = await fetch('/api/branches', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingBranch)
+        body: JSON.stringify(branchToSave)
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -491,6 +529,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
   const handleOpenEdit = (product) => {
     setEditingProduct({
       ...product,
+      code: product.code || product.modelCode || `MRT-${Math.floor(100 + Math.random() * 900)}`,
       nameUz: product.name?.uz || (typeof product.name === 'string' ? product.name : ''),
       nameRu: product.name?.ru || '',
       descUz: product.description?.uz || (typeof product.description === 'string' ? product.description : ''),
@@ -504,6 +543,8 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       image: product.image || ''
     });
     setModalError('');
+    setShowQuickAddCat(false);
+    setQuickCatName('');
     setIsModalOpen(true);
   };
 
@@ -524,6 +565,8 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       image: ''
     });
     setModalError('');
+    setShowQuickAddCat(false);
+    setQuickCatName('');
     setIsModalOpen(true);
   };
 
@@ -587,9 +630,11 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       return;
     }
 
+    const productCode = (editingProduct.code || `MRT-${Math.floor(100 + Math.random() * 900)}`).trim();
     const payload = {
       id: editingProduct.id || undefined,
-      code: editingProduct.code || `MRT-${Math.floor(100 + Math.random() * 900)}`,
+      code: productCode,
+      modelCode: productCode,
       category: editingProduct.category || 'dvoyka',
       name: {
         uz: editingProduct.nameUz,
@@ -1051,11 +1096,11 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                               {categoryName}
                             </span>
                             <div className="text-right">
-                              <span className="text-base font-semibold text-white">
+                              <span className={`text-base font-semibold ${formattedOldPrice ? 'text-red-500 font-bold' : 'text-white'}`}>
                                 {formattedPrice}
                               </span>
                               {formattedOldPrice && (
-                                <span className="block text-[11px] text-[#6b7280] line-through">
+                                <span className="block text-[11px] text-[#8f96a0] line-through">
                                   {formattedOldPrice}
                                 </span>
                               )}
@@ -1420,7 +1465,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                     <div className="relative aspect-[16/10] bg-black/60 overflow-hidden">
                       <img src={b.image} alt={b.name} className="w-full h-full object-cover" />
                       <div className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-black/70 border border-white/10 font-mono text-[9px] uppercase tracking-wider text-[#E5C378]">
-                        NODE 0{idx + 1} // {b.badge}
+                        {b.badge || `NODE 0${idx + 1}`}
                       </div>
                       <div className="absolute bottom-2.5 right-3 font-mono text-[9px] text-[#4fc79a] bg-black/70 px-2 py-0.5 rounded-full border border-white/10">
                         {b.status || 'OCHIQ'}
@@ -1676,19 +1721,35 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
               {/* SECTION 2: PRODUCT TEXTS & CAPTIONS */}
               <div className="space-y-4">
                 
-                {/* Title */}
-                <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-[#8f96a0] mb-1.5">
-                    Mahsulot Nomi (Sarlavha) *
-                  </label>
-                  <input
-                    type="text"
-                    value={editingProduct.nameUz}
-                    onChange={(e) => setEditingProduct({ ...editingProduct, nameUz: e.target.value })}
-                    placeholder="Masalan: Meratto Sport-Chic Qora Dvoyka"
-                    required
-                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-[#555a64] focus:outline-none focus:border-[#E5C378]"
-                  />
+                {/* Title & Product Code Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-mono uppercase tracking-wider text-[#8f96a0] mb-1.5">
+                      Mahsulot Nomi (Sarlavha) *
+                    </label>
+                    <input
+                      type="text"
+                      value={editingProduct.nameUz}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, nameUz: e.target.value })}
+                      placeholder="Masalan: Meratto Sport-Chic Qora Dvoyka"
+                      required
+                      className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-[#555a64] focus:outline-none focus:border-[#E5C378]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono uppercase tracking-wider text-[#8f96a0] mb-1.5 flex items-center justify-between">
+                      <span>Kiyim Kodi / Artikul</span>
+                      <span className="text-[10px] text-[#E5C378] font-normal lowercase">(model kodi)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={editingProduct.code || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, code: e.target.value })}
+                      placeholder="Masalan: MRT-042 yoki MRT-108"
+                      className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-[#555a64] font-mono focus:outline-none focus:border-[#E5C378]"
+                    />
+                  </div>
                 </div>
 
                 {/* Description */}
@@ -1746,21 +1807,56 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                       placeholder="1150000"
                       className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white placeholder-[#555a64] focus:outline-none focus:border-[#E5C378]"
                     />
+                    <span className="text-[10px] text-[#555a64] mt-1 block">Yozilsa, yangi narx qizil rangda chiqadi</span>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono uppercase tracking-wider text-[#8f96a0] mb-1.5">
-                      Kategoriya (Bo'lim) *
-                    </label>
-                    <select
-                      value={editingProduct.category}
-                      onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
-                      className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-[#E5C378]"
-                    >
-                      {categories.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-mono uppercase tracking-wider text-[#8f96a0]">
+                        Kategoriya (Bo'lim) *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowQuickAddCat(!showQuickAddCat)}
+                        className="text-[11px] text-[#E5C378] hover:underline flex items-center gap-1 font-mono"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>{showQuickAddCat ? 'Yopish' : "+ Yangi bo'lim"}</span>
+                      </button>
+                    </div>
+
+                    {showQuickAddCat ? (
+                      <div className="p-2.5 rounded-xl bg-[#0e1015] border border-[#E5C378]/30 space-y-2 animate-fade-in">
+                        <span className="text-[11px] text-[#E5C378] font-mono block">Yangi bo'lim nomini yozing:</span>
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={quickCatName}
+                            onChange={(e) => setQuickCatName(e.target.value)}
+                            placeholder="Masalan: Pidjaklar..."
+                            className="flex-1 bg-[#16181f] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-[#555] focus:outline-none focus:border-[#E5C378]"
+                          />
+                          <button
+                            type="button"
+                            disabled={quickCatLoading || !quickCatName.trim()}
+                            onClick={handleQuickCreateCategory}
+                            className="px-3 py-1.5 rounded-lg bg-[#E5C378] text-[#07080a] font-semibold text-xs hover:brightness-110 disabled:opacity-50 shrink-0"
+                          >
+                            {quickCatLoading ? '...' : "Qo'shish"}
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <select
+                        value={editingProduct.category}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, category: e.target.value })}
+                        className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                      >
+                        {categories.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 </div>
 
@@ -1931,29 +2027,32 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
               {/* Badge & Status */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
-                    Belgisi (Badge)
+                  <label className="block text-xs font-mono uppercase text-[#8f96a0] flex items-center justify-between">
+                    <span>Tepasidagi Yozuv / Badge *</span>
+                    <span className="text-[10px] text-[#E5C378] font-normal lowercase">(kartaning tepasidagi sarlavha)</span>
                   </label>
                   <input
                     type="text"
                     value={editingBranch.badge || ''}
                     onChange={(e) => setEditingBranch({ ...editingBranch, badge: e.target.value })}
-                    placeholder="Masalan: Bosh do'kon yoki Eksklyuziv butik"
-                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                    placeholder="Masalan: NODE 01 // BOSH DO'KON"
+                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-[#E5C378]"
                   />
+                  <span className="text-[10px] text-[#555a64] block">Karta ustidagi qora tasmada aynan shu yozuv ko'rinadi</span>
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="block text-xs font-mono uppercase text-[#8f96a0]">
-                    Status Belgisi
+                    Status Belgisi (Pastki o'ng burchak)
                   </label>
                   <input
                     type="text"
                     value={editingBranch.status || ''}
                     onChange={(e) => setEditingBranch({ ...editingBranch, status: e.target.value })}
                     placeholder="Masalan: OCHIQ (10:00 - 22:00)"
-                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-[#E5C378]"
                   />
+                  <span className="text-[10px] text-[#555a64] block">Yashil nuqta bilan ochiq/yopiq holati</span>
                 </div>
               </div>
 
@@ -2018,25 +2117,29 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
               {/* Phones List */}
               <div className="p-4 rounded-xl bg-[#16181f] border border-white/10 space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
-                    Filial Telefon Raqamlari
-                  </label>
+                  <div>
+                    <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                      Filial Telefon Raqamlari
+                    </label>
+                    <span className="text-[10px] text-[#555a64] block">Har bir raqam mijoz uchun alohida qo'ng'iroq tugmasi bo'ladi</span>
+                  </div>
                   <button
                     type="button"
                     onClick={() => setEditingBranch({
                       ...editingBranch,
                       phones: [...(editingBranch.phones || []), '+998 ']
                     })}
-                    className="text-[11px] text-[#E5C378] hover:underline flex items-center gap-1"
+                    className="py-1 px-3 rounded-lg bg-[#E5C378]/10 text-[#E5C378] hover:bg-[#E5C378]/20 border border-[#E5C378]/20 text-xs font-mono flex items-center gap-1.5 transition-all"
                   >
-                    <Plus className="w-3 h-3" />
+                    <Plus className="w-3.5 h-3.5" />
                     <span>Raqam Qo'shish</span>
                   </button>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {(editingBranch.phones || []).map((ph, phIdx) => (
                     <div key={phIdx} className="flex items-center gap-2">
+                      <div className="w-6 text-center font-mono text-xs text-[#8f96a0]">#{phIdx + 1}</div>
                       <input
                         type="text"
                         value={ph}
@@ -2046,16 +2149,17 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                           setEditingBranch({ ...editingBranch, phones: newPhones });
                         }}
                         placeholder="+998 90 123 45 67"
-                        className="flex-1 bg-[#0e1015] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-[#E5C378]"
+                        className="flex-1 bg-[#0e1015] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white font-mono focus:outline-none focus:border-[#E5C378]"
                       />
-                      {editingBranch.phones.length > 1 && (
+                      {(editingBranch.phones || []).length > 1 && (
                         <button
                           type="button"
                           onClick={() => {
                             const newPhones = editingBranch.phones.filter((_, i) => i !== phIdx);
                             setEditingBranch({ ...editingBranch, phones: newPhones });
                           }}
-                          className="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center transition-colors"
+                          className="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center transition-colors shrink-0"
+                          title="Raqamni o'chirish"
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>

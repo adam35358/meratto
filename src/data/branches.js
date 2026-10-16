@@ -3,7 +3,7 @@ export const branches = [
     id: "meratto-qoratosh",
     name: "Meratto Qoratosh",
     brand: "Meratto",
-    badge: "Bosh do'kon",
+    badge: "NODE 01 // BOSH DO'KON",
     address: {
       uz: "Qoratosh ko'chasi, 5B-uy",
       ru: "ул. Караташ, 5B",
@@ -24,7 +24,7 @@ export const branches = [
     id: "meratto-chilonzor",
     name: "Meratto Chilonzor",
     brand: "Meratto",
-    badge: "Chilonzor filiali",
+    badge: "NODE 02 // CHILONZOR FILIALI",
     address: {
       uz: "Qatortol ko'chasi, S kvartal 14",
       ru: "ул. Катартал, квартал Ц, дом 14",
@@ -45,7 +45,7 @@ export const branches = [
     id: "de-franko-qoratosh",
     name: "De Franko",
     brand: "De Franko",
-    badge: "Eksklyuziv butik",
+    badge: "NODE 03 // EKSKLYUZIV BUTIK",
     address: {
       uz: "Qoratosh ko'chasi, 65-uy",
       ru: "ул. Караташ, 65",

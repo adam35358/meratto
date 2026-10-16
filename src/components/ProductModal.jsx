@@ -106,12 +106,18 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
 
               {/* Price */}
               <div className="mt-4 flex items-baseline gap-3">
-                <span className="text-2xl sm:text-3xl font-mono font-normal text-white">
-                  {formatPrice(product.price)} <span className="text-xs font-mono tracking-wider text-woufx-muted">{t.catalog.price}</span>
-                </span>
-                {product.oldPrice && (
-                  <span className="text-sm font-mono text-woufx-subtle line-through">
-                    {formatPrice(product.oldPrice)}
+                {product.oldPrice && Number(product.oldPrice) > 0 ? (
+                  <>
+                    <span className="text-2xl sm:text-3xl font-mono font-medium text-red-500">
+                      {formatPrice(product.price)} <span className="text-xs font-mono tracking-wider text-red-400">{t.catalog.price}</span>
+                    </span>
+                    <span className="text-sm font-mono text-[#8f96a0] line-through">
+                      {formatPrice(product.oldPrice)}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-2xl sm:text-3xl font-mono font-normal text-white">
+                    {formatPrice(product.price)} <span className="text-xs font-mono tracking-wider text-woufx-muted">{t.catalog.price}</span>
                   </span>
                 )}
               </div>

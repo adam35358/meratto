@@ -147,12 +147,18 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
           <div className="pt-3 border-t border-white/[0.08] space-y-3">
             <div className="flex items-baseline justify-between">
               <div>
-                <div className="font-display text-xl sm:text-2xl font-light text-white tracking-tight">
-                  {formatPrice(product.price)} <span className="font-mono text-xs text-[#8f96a0] font-normal">{t.catalog.price || "UZS"}</span>
-                </div>
-                {product.oldPrice && (
-                  <div className="font-mono text-[10px] text-[#5f6671] line-through -mt-0.5">
-                    {formatPrice(product.oldPrice)} {t.catalog.price || "UZS"}
+                {product.oldPrice && Number(product.oldPrice) > 0 ? (
+                  <>
+                    <div className="font-display text-xl sm:text-2xl font-medium text-red-500 tracking-tight">
+                      {formatPrice(product.price)} <span className="font-mono text-xs text-red-400 font-normal">{t.catalog.price || "UZS"}</span>
+                    </div>
+                    <div className="font-mono text-[11px] text-[#8f96a0] line-through -mt-0.5">
+                      {formatPrice(product.oldPrice)} {t.catalog.price || "UZS"}
+                    </div>
+                  </>
+                ) : (
+                  <div className="font-display text-xl sm:text-2xl font-light text-white tracking-tight">
+                    {formatPrice(product.price)} <span className="font-mono text-xs text-[#8f96a0] font-normal">{t.catalog.price || "UZS"}</span>
                   </div>
                 )}
               </div>
