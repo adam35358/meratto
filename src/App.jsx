@@ -460,6 +460,7 @@ export default function App() {
                   onAddToCart={(p) => handleAddToCart(p)}
                   onQuickOrder={(p) => handleQuickOrder(p)}
                   isAdded={addedItemIds.includes(product.id)}
+                  branches={siteBranches}
                 />
               ))}
             </div>

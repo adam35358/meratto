@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Eye, ShoppingBag, Zap, Check, Sparkles, Store } from 'lucide-react';
 
-export default function ProductCard({ product, lang, t, onQuickView, onAddToCart, onQuickOrder, isAdded, index = 0 }) {
+export default function ProductCard({ product, lang, t, onQuickView, onAddToCart, onQuickOrder, isAdded, index = 0, branches = [] }) {
   const cardRef = useRef(null);
   const [transformStyle, setTransformStyle] = useState('');
   const [glareStyle, setGlareStyle] = useState({ opacity: 0, x: 50, y: 50 });
@@ -9,6 +9,28 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
 
   const formatPrice = (num) => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  };
+
+  const getBranchNames = (branchIds) => {
+    if (!Array.isArray(branchIds) || branchIds.length === 0) {
+      return "3 la do'konda";
+    }
+    const branchNameMap = {
+      'meratto-qoratosh': 'Meratto Qoratosh',
+      'meratto-chilonzor': 'Meratto Chilonzor',
+      'de-franko-qoratosh': 'De Franko'
+    };
+    if (Array.isArray(branches) && branches.length > 0) {
+      branches.forEach(b => {
+        if (b.id && b.name) branchNameMap[b.id] = b.name;
+      });
+    }
+    const totalCount = Array.isArray(branches) && branches.length > 0 ? branches.length : 3;
+    if (branchIds.length >= totalCount) {
+      return "3 la do'konda";
+    }
+    const names = branchIds.map(id => branchNameMap[id] || id);
+    return names.join(', ');
   };
 
   // 3D Tilt calculation on mouse move
@@ -143,14 +165,12 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
             </p>
 
             {/* Model code & Available branches */}
-            <div className="mt-2 pt-2 border-t border-white/[0.04] flex items-center justify-between text-[10px] font-mono text-[#8f96a0]">
-              <span className="text-[#E5C378]">{product.code || product.modelCode || ''}</span>
-              <span className="text-[#8f96a0] flex items-center gap-1 truncate max-w-[180px]" title="Mavjud do'konlar">
+            <div className="mt-2 pt-2 border-t border-white/[0.04] flex items-center justify-between text-[10px] font-mono">
+              <span className="text-[#E5C378] font-medium">{product.code || product.modelCode || ''}</span>
+              <span className="text-[#E5C378] flex items-center gap-1 truncate max-w-[200px]" title={`Mavjud do'konlar: ${getBranchNames(product.availableBranches)}`}>
                 <Store className="w-3 h-3 text-[#E5C378] shrink-0" />
-                <span className="truncate">
-                  {Array.isArray(product.availableBranches) && product.availableBranches.length > 0
-                    ? (product.availableBranches.length === 3 ? "3 ta do'konda" : product.availableBranches.map(id => id.replace('meratto-', '').replace('-qoratosh', '').replace('-', ' ').toUpperCase()).join(', '))
-                    : "3 ta do'konda"}
+                <span className="truncate font-sans font-medium">
+                  {getBranchNames(product.availableBranches)}
                 </span>
               </span>
             </div>

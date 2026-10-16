@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://meratto.uz/sitemap.xml
+Sitemap: https://meratto-uz.netlify.app/sitemap.xml

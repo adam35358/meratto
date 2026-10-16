@@ -52,6 +52,11 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
   const [showQuickAddCat, setShowQuickAddCat] = useState(false);
   const [quickCatName, setQuickCatName] = useState('');
   const [quickCatLoading, setQuickCatLoading] = useState(false);
+  const [showQuickAddBranch, setShowQuickAddBranch] = useState(false);
+  const [quickBranchName, setQuickBranchName] = useState('');
+  const [quickBranchBrand, setQuickBranchBrand] = useState('Meratto');
+  const [quickBranchAddress, setQuickBranchAddress] = useState('');
+  const [quickBranchLoading, setQuickBranchLoading] = useState(false);
 
   // Category Add / Edit State
   const [newCatName, setNewCatName] = useState('');
@@ -532,6 +537,30 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       : ['meratto-qoratosh', 'meratto-chilonzor', 'de-franko-qoratosh'];
   };
 
+  const getBranchDisplayNames = (branchIds) => {
+    if (!Array.isArray(branchIds) || branchIds.length === 0) {
+      return "3 la do'konda bor";
+    }
+
+    const branchNameMap = {
+      'meratto-qoratosh': 'Meratto Qoratosh',
+      'meratto-chilonzor': 'Meratto Chilonzor',
+      'de-franko-qoratosh': 'De Franko'
+    };
+
+    branches.forEach(b => {
+      if (b.id && b.name) branchNameMap[b.id] = b.name;
+    });
+
+    const totalCount = branches.length > 0 ? branches.length : 3;
+    if (branchIds.length >= totalCount) {
+      return "3 la do'konda bor";
+    }
+
+    const names = branchIds.map(id => branchNameMap[id] || id);
+    return names.join(', ');
+  };
+
   const handleOpenEdit = (product) => {
     const allBranchIds = getBranchIds();
     const prodBranches = Array.isArray(product.availableBranches) && product.availableBranches.length > 0
@@ -557,6 +586,9 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
     setModalError('');
     setShowQuickAddCat(false);
     setQuickCatName('');
+    setShowQuickAddBranch(false);
+    setQuickBranchName('');
+    setQuickBranchAddress('');
     setIsModalOpen(true);
   };
 
@@ -581,7 +613,65 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
     setModalError('');
     setShowQuickAddCat(false);
     setQuickCatName('');
+    setShowQuickAddBranch(false);
+    setQuickBranchName('');
+    setQuickBranchAddress('');
     setIsModalOpen(true);
+  };
+
+  const handleQuickAddBranch = async (e) => {
+    if (e) e.preventDefault();
+    if (!quickBranchName.trim()) return;
+
+    setQuickBranchLoading(true);
+    const slug = (quickBranchName.trim())
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-');
+    const newBranchId = slug || `branch_${Date.now()}`;
+
+    const newBranch = {
+      id: newBranchId,
+      name: quickBranchName.trim(),
+      brand: quickBranchBrand || 'Meratto',
+      badge: quickBranchName.trim(),
+      address: quickBranchAddress.trim() || 'Toshkent shahri',
+      landmark: '',
+      phones: ['+998 98 311 33 37'],
+      hours: 'Har kuni 10:00 — 23:00',
+      status: 'OCHIQ (10:00 - 22:00)',
+      image: '/images/branches/branch_qoratosh_flagship.jpg',
+      mapUrl: ''
+    };
+
+    try {
+      const res = await fetch('/api/branches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newBranch)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setBranches(data.branches);
+        if (editingProduct) {
+          setEditingProduct(prev => ({
+            ...prev,
+            availableBranches: [...(prev.availableBranches || []), newBranchId]
+          }));
+        }
+        setQuickBranchName('');
+        setQuickBranchAddress('');
+        setShowQuickAddBranch(false);
+        showToast(`"${newBranch.name}" do'koni muvaffaqiyatli qo'shildi!`);
+        fetchSettings();
+      } else {
+        alert(data.error || "Do'kon qo'shishda xatolik yuz berdi");
+      }
+    } catch (err) {
+      alert("Xatolik: " + err.message);
+    } finally {
+      setQuickBranchLoading(false);
+    }
   };
 
   // 7. Image Upload via Base64
@@ -1142,12 +1232,10 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                             <div className="text-[11px] text-[#6b7280] truncate">
                               {Array.isArray(p.sizes) ? p.sizes.join(' · ') : ''}
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#8f96a0] truncate">
+                            <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#E5C378] truncate" title={`Mavjud do'konlar: ${getBranchDisplayNames(p.availableBranches)}`}>
                               <Building className="w-3 h-3 text-[#E5C378] shrink-0" />
-                              <span>
-                                {Array.isArray(p.availableBranches) && p.availableBranches.length > 0
-                                  ? (p.availableBranches.length >= (branches.length || 3) ? "3 la do'konda bor" : `${p.availableBranches.length} ta do'konda`)
-                                  : "3 la do'konda bor"}
+                              <span className="truncate font-sans font-medium">
+                                {getBranchDisplayNames(p.availableBranches)}
                               </span>
                             </div>
                           </div>
@@ -1963,7 +2051,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
                       <button
                         type="button"
                         onClick={() => {
@@ -1981,8 +2069,81 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                       >
                         Tozalash
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowQuickAddBranch(!showQuickAddBranch)}
+                        className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-[#E5C378]/10 text-[#E5C378] hover:bg-[#E5C378]/20 border border-[#E5C378]/25 transition-all font-medium flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>{showQuickAddBranch ? 'Yopish' : "Yangi do'kon qo'shish"}</span>
+                      </button>
                     </div>
                   </div>
+
+                  {/* Inline Quick Add Branch Box */}
+                  {showQuickAddBranch && (
+                    <div className="p-3.5 rounded-xl bg-[#0e1015] border border-[#E5C378]/40 space-y-3 animate-fade-in">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono text-[#E5C378] flex items-center gap-1.5 font-medium">
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Yangi filial / do'kon ma'lumotlari:</span>
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowQuickAddBranch(false)}
+                          className="text-[11px] text-[#8f96a0] hover:text-white"
+                        >
+                          Bekor qilish
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        <div className="sm:col-span-1">
+                          <input
+                            type="text"
+                            value={quickBranchName}
+                            onChange={(e) => setQuickBranchName(e.target.value)}
+                            placeholder="Do'kon nomi (Masalan: Meratto Yunusobod)..."
+                            className="w-full bg-[#16181f] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-[#555] focus:outline-none focus:border-[#E5C378]"
+                          />
+                        </div>
+                        <div className="sm:col-span-1">
+                          <select
+                            value={quickBranchBrand}
+                            onChange={(e) => setQuickBranchBrand(e.target.value)}
+                            className="w-full bg-[#16181f] border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                          >
+                            <option value="Meratto">Meratto</option>
+                            <option value="De Franko">De Franko</option>
+                          </select>
+                        </div>
+                        <div className="sm:col-span-1">
+                          <input
+                            type="text"
+                            value={quickBranchAddress}
+                            onChange={(e) => setQuickBranchAddress(e.target.value)}
+                            placeholder="Manzil (Masalan: Yunusobod 4-mavze)..."
+                            className="w-full bg-[#16181f] border border-white/10 rounded-lg px-3 py-2 text-xs text-white placeholder-[#555] focus:outline-none focus:border-[#E5C378]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1">
+                        <span className="text-[10px] text-[#8f96a0]">
+                          Filial qo'shilgach, ushbu mahsulotga avtomatik biriktiriladi.
+                        </span>
+                        <button
+                          type="button"
+                          disabled={quickBranchLoading || !quickBranchName.trim()}
+                          onClick={handleQuickAddBranch}
+                          className="px-4 py-1.5 rounded-lg bg-[#E5C378] text-[#07080a] font-semibold text-xs hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 flex items-center gap-1.5 shrink-0"
+                        >
+                          {quickBranchLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                          <span>Filialni Qo'shish</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
                     {(branches.length > 0 ? branches : [

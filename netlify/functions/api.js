@@ -410,7 +410,8 @@ export async function handler(event, context) {
 
       if (method === 'DELETE') {
         const idFromPath = pathname.replace('/api/branches/', '').replace('/api/branches', '');
-        const targetId = idFromPath || body.id;
+        const idFromQuery = event.queryStringParameters?.id;
+        const targetId = idFromPath || idFromQuery || body?.id;
         settings.branches = (settings.branches || []).filter(b => b.id !== targetId);
         await setStoredSettings(settings);
         return { statusCode: 200, headers, body: JSON.stringify({ success: true, branches: settings.branches }) };
