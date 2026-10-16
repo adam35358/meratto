@@ -34,38 +34,88 @@
     }
   ],
   "contacts": {
-    "mainPhone": "+998 98 311 33 37",
-    "branches": [
-      {
-        "id": "meratto-qoratosh",
-        "name": "Meratto Qoratosh",
-        "node": "Node 01: Qoratosh 5B",
-        "address": "Qoratosh ko'chasi, 5B-uy",
-        "phones": [
-          "+998 98 311 33 37",
-          "+998 99 866 52 25"
-        ]
-      },
-      {
-        "id": "meratto-chilonzor",
-        "name": "Meratto Chilonzor",
-        "node": "Node 02: Chilonzor S-14",
-        "address": "Qatortol ko'chasi, S kvartal 14",
-        "phones": [
-          "+998 97 660 66 44",
-          "+998 94 805 10 58"
-        ]
-      },
-      {
-        "id": "de-franko-qoratosh",
-        "name": "De Franko",
-        "node": "Node 03: Qoratosh 65",
-        "address": "Qoratosh ko'chasi, 65-uy",
-        "phones": [
-          "+998 99 302 11 66",
-          "+998 95 889 16 18"
-        ]
-      }
-    ]
-  }
+    "mainPhone": "+998 98 311 33 37"
+  },
+  "branches": [
+    {
+      "id": "meratto-qoratosh",
+      "name": "Meratto Qoratosh",
+      "brand": "Meratto",
+      "badge": "Bosh do'kon",
+      "address": "Qoratosh ko'chasi, 5B-uy",
+      "landmark": "Samarqand Darvoza savdo markazidan o'tganda",
+      "phones": [
+        "+998 98 311 33 37",
+        "+998 99 866 52 25"
+      ],
+      "hours": "Har kuni 10:00 — 23:00",
+      "status": "OCHIQ (10:00 - 22:00)",
+      "image": "/images/branches/branch_qoratosh_flagship.jpg",
+      "mapUrl": "https://yandex.uz/maps/?text=Tashkent+Qoratosh+5B"
+    },
+    {
+      "id": "meratto-chilonzor",
+      "name": "Meratto Chilonzor",
+      "brand": "Meratto",
+      "badge": "Chilonzor filiali",
+      "address": "Qatortol ko'chasi, S kvartal 14",
+      "landmark": "Qatortol savdo majmuasi va Chilonzor metrosi yaqinida",
+      "phones": [
+        "+998 97 660 66 44",
+        "+998 94 805 10 58"
+      ],
+      "hours": "Har kuni 10:00 — 23:00",
+      "status": "OCHIQ (10:00 - 22:00)",
+      "image": "/images/branches/branch_chilonzor_store.jpg",
+      "mapUrl": "https://yandex.uz/maps/?text=Tashkent+Katartal+14"
+    },
+    {
+      "id": "de-franko-qoratosh",
+      "name": "De Franko",
+      "brand": "De Franko",
+      "badge": "Eksklyuziv butik",
+      "address": "Qoratosh ko'chasi, 65-uy",
+      "landmark": "Qoratosh markaziy yo'li bo'yida",
+      "phones": [
+        "+998 99 302 11 66",
+        "+998 95 889 16 18"
+      ],
+      "hours": "Har kuni 10:00 — 23:00",
+      "status": "OCHIQ (10:00 - 22:00)",
+      "image": "/images/branches/branch_defranko_boutique.jpg",
+      "mapUrl": "https://yandex.uz/maps/?text=Tashkent+Qoratosh+65"
+    }
+  ],
+  "testimonials": [
+    {
+      "id": 1,
+      "name": "Sardor Mirzayev",
+      "city": "Toshkent (Qoratosh filiali)",
+      "rating": 5,
+      "date": "12 Oktabr, 2026",
+      "outfit": "Smart Casual Dvoyka + Oxford Ko'ylak",
+      "avatar": "/images/avatars/avatar_sardor.jpg",
+      "comment": "Meratto Qoratosh filialidan ikkinchi marta dvoyka oldim. Razmeri xuddi tikib berilgandek tushdi, matosi yengil va terlatmaydi. Ayniqsa do'kondagi maslahatchi yigitlarning muomalasi a'lo!"
+    },
+    {
+      "id": 2,
+      "name": "Farrux Qodirov",
+      "city": "Toshkent (Chilonzor filiali)",
+      "rating": 5,
+      "date": "8 Oktabr, 2026",
+      "outfit": "Chinos Shim + Polo + Loferlar",
+      "avatar": "/images/avatars/avatar_farrux.jpg",
+      "comment": "Chilonzordagi do'kondan smart casual uslubida to'liq obraz yig'ib berishdi. Ofisda ham, do'stlar bilan uchrashuvda ham o'ta qulay. Sifatiga gap yo'q."
+    },
+    {
+      "id": 3,
+      "name": "Bekzod Umarov",
+      "city": "Toshkent (De Franko butiki)",
+      "rating": 5,
+      "date": "3 Oktabr, 2026",
+      "outfit": "Yengil Palto + Kardigan + Charm Kamar",
+      "avatar": "/images/avatars/avatar_bekzod.jpg",
+      "comment": "De Franko butikining atmosferasi va kiyimlarining didi juda yoqdi. Ayniqsa kuzgi mavsumiy palto va loferlar nihoyatda chiroyli ekan. Rahmat sizlarga!"
+    }
+  ]
 }

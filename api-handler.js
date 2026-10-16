@@ -343,16 +343,156 @@ export async function handleApiRequest(req, res, env = {}) {
   }
 
   // Contacts & Phone Numbers Update (/api/contacts)
-  if (pathname === '/api/contacts' && method === 'PUT') {
-    const body = await readBody(req);
-    const settings = readSettings();
-    settings.contacts = {
-      ...settings.contacts,
-      ...body
-    };
-    writeSettings(settings);
-    sendJson(res, 200, { success: true, contacts: settings.contacts });
-    return true;
+  if (pathname === '/api/contacts') {
+    if (method === 'GET') {
+      const settings = readSettings();
+      sendJson(res, 200, settings.contacts || {});
+      return true;
+    }
+    if (method === 'PUT' || method === 'POST') {
+      const body = await readBody(req);
+      const settings = readSettings();
+      settings.contacts = {
+        ...settings.contacts,
+        ...body
+      };
+      writeSettings(settings);
+      sendJson(res, 200, { success: true, contacts: settings.contacts });
+      return true;
+    }
+  }
+
+  // Branches Management (/api/branches)
+  if (pathname === '/api/branches' || pathname.startsWith('/api/branches/')) {
+    if (method === 'GET') {
+      const settings = readSettings();
+      sendJson(res, 200, settings.branches || []);
+      return true;
+    }
+
+    if (method === 'POST' || method === 'PUT') {
+      const body = await readBody(req);
+      const settings = readSettings();
+      let branches = settings.branches || [];
+
+      // Bulk replace if array
+      if (Array.isArray(body)) {
+        settings.branches = body;
+        writeSettings(settings);
+        sendJson(res, 200, { success: true, branches: settings.branches });
+        return true;
+      }
+
+      const branchId = body.id || (body.name || '').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') || `branch_${Date.now()}`;
+      const branchItem = {
+        id: branchId,
+        name: body.name || 'Filial',
+        brand: body.brand || 'Meratto',
+        badge: body.badge || "Do'kon",
+        address: body.address || '',
+        landmark: body.landmark || '',
+        phones: Array.isArray(body.phones) ? body.phones : (body.phones ? [body.phones] : []),
+        hours: body.hours || 'Har kuni 10:00 — 23:00',
+        status: body.status || 'OCHIQ (10:00 - 22:00)',
+        image: body.image || '/images/branches/branch_qoratosh_flagship.jpg',
+        mapUrl: body.mapUrl || ''
+      };
+
+      const existingIdx = branches.findIndex(b => b.id === branchId);
+      if (existingIdx !== -1) {
+        branches[existingIdx] = { ...branches[existingIdx], ...branchItem };
+      } else {
+        branches.push(branchItem);
+      }
+
+      settings.branches = branches;
+      writeSettings(settings);
+      sendJson(res, 200, { success: true, branch: branchItem, branches });
+      return true;
+    }
+
+    if (method === 'DELETE') {
+      const idFromPath = pathname.replace('/api/branches/', '').replace('/api/branches', '');
+      const idFromQuery = url.searchParams.get('id');
+      const body = await readBody(req);
+      const targetId = idFromPath || idFromQuery || body.id;
+
+      if (!targetId) {
+        sendJson(res, 400, { success: false, error: "O'chirish uchun filial ID si kerak" });
+        return true;
+      }
+
+      const settings = readSettings();
+      settings.branches = (settings.branches || []).filter(b => b.id !== targetId);
+      writeSettings(settings);
+      sendJson(res, 200, { success: true, message: "Filial o'chirildi", branches: settings.branches });
+      return true;
+    }
+  }
+
+  // Testimonials / Reviews Management (/api/testimonials)
+  if (pathname === '/api/testimonials' || pathname.startsWith('/api/testimonials/')) {
+    if (method === 'GET') {
+      const settings = readSettings();
+      sendJson(res, 200, settings.testimonials || []);
+      return true;
+    }
+
+    if (method === 'POST' || method === 'PUT') {
+      const body = await readBody(req);
+      const settings = readSettings();
+      let testimonials = settings.testimonials || [];
+
+      // Bulk replace if array
+      if (Array.isArray(body)) {
+        settings.testimonials = body;
+        writeSettings(settings);
+        sendJson(res, 200, { success: true, testimonials: settings.testimonials });
+        return true;
+      }
+
+      const testId = body.id || Date.now();
+      const testItem = {
+        id: testId,
+        name: body.name || 'Mijoz',
+        city: body.city || 'Toshkent',
+        rating: Number(body.rating) || 5,
+        date: body.date || 'Bugun',
+        outfit: body.outfit || 'Kostyum / Dvoyka',
+        avatar: body.avatar || '/images/avatars/avatar_sardor.jpg',
+        comment: body.comment || ''
+      };
+
+      const existingIdx = testimonials.findIndex(t => String(t.id) === String(testId));
+      if (existingIdx !== -1) {
+        testimonials[existingIdx] = { ...testimonials[existingIdx], ...testItem };
+      } else {
+        testimonials.unshift(testItem); // add to top
+      }
+
+      settings.testimonials = testimonials;
+      writeSettings(settings);
+      sendJson(res, 200, { success: true, testimonial: testItem, testimonials });
+      return true;
+    }
+
+    if (method === 'DELETE') {
+      const idFromPath = pathname.replace('/api/testimonials/', '').replace('/api/testimonials', '');
+      const idFromQuery = url.searchParams.get('id');
+      const body = await readBody(req);
+      const targetId = idFromPath || idFromQuery || body.id;
+
+      if (!targetId) {
+        sendJson(res, 400, { success: false, error: "O'chirish uchun fikr ID si kerak" });
+        return true;
+      }
+
+      const settings = readSettings();
+      settings.testimonials = (settings.testimonials || []).filter(t => String(t.id) !== String(targetId));
+      writeSettings(settings);
+      sendJson(res, 200, { success: true, message: "Fikr o'chirildi", testimonials: settings.testimonials });
+      return true;
+    }
   }
 
   // 5. File / Image Upload

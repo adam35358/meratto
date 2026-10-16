@@ -3,11 +3,11 @@ import {
   Lock, Unlock, LogOut, Plus, Edit3, Trash2, Upload, Image as ImageIcon, 
   ExternalLink, Check, X, Search, Filter, Sparkles, Save, RefreshCw, 
   AlertCircle, Eye, EyeOff, Layers, Tag, ArrowLeft, Phone, MapPin, 
-  FolderPlus, Settings, ShoppingBag, Hash
+  FolderPlus, Settings, ShoppingBag, Hash, Star, MessageSquare, Clock, Building, User, Quote
 } from 'lucide-react';
 
 export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettingsUpdated }) {
-  // Navigation Tabs State: 'products' | 'categories' | 'contacts'
+  // Navigation Tabs State: 'products' | 'categories' | 'branches' | 'testimonials' | 'contacts'
   const [activeTab, setActiveTab] = useState('products');
 
   // Authentication State
@@ -25,14 +25,23 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
 
   // Categories & Contacts Settings State
   const [categories, setCategories] = useState([]);
-  const [contacts, setContacts] = useState({
-    mainPhone: '+998 98 311 33 37',
-    branches: [
-      { id: 'meratto-qoratosh', name: 'Meratto Qoratosh', node: 'Node 01: Qoratosh 5B', address: "Qoratosh ko'chasi, 5B-uy", phones: ['+998 98 311 33 37', '+998 99 866 52 25'] },
-      { id: 'meratto-chilonzor', name: 'Meratto Chilonzor', node: 'Node 02: Chilonzor S-14', address: "Qatortol ko'chasi, S kvartal 14", phones: ['+998 97 660 66 44', '+998 94 805 10 58'] },
-      { id: 'de-franko-qoratosh', name: 'De Franko', node: 'Node 03: Qoratosh 65', address: "Qoratosh ko'chasi, 65-uy", phones: ['+998 99 302 11 66', '+998 95 889 16 18'] }
-    ]
-  });
+  const [contacts, setContacts] = useState({ mainPhone: '+998 98 311 33 37' });
+
+  // Branches State & Modals
+  const [branches, setBranches] = useState([]);
+  const [editingBranch, setEditingBranch] = useState(null);
+  const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
+  const [branchSaving, setBranchSaving] = useState(false);
+  const [branchImageLoading, setBranchImageLoading] = useState(false);
+  const branchFileInputRef = useRef(null);
+
+  // Testimonials State & Modals
+  const [testimonials, setTestimonials] = useState([]);
+  const [editingTestimonial, setEditingTestimonial] = useState(null);
+  const [isTestimonialModalOpen, setIsTestimonialModalOpen] = useState(false);
+  const [testimonialSaving, setTestimonialSaving] = useState(false);
+  const [avatarImageLoading, setAvatarImageLoading] = useState(false);
+  const avatarFileInputRef = useRef(null);
 
   // Edit / Add Product Modal State
   const [editingProduct, setEditingProduct] = useState(null);
@@ -131,6 +140,12 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
         }
         if (data.contacts) {
           setContacts(data.contacts);
+        }
+        if (Array.isArray(data.branches)) {
+          setBranches(data.branches);
+        }
+        if (Array.isArray(data.testimonials)) {
+          setTestimonials(data.testimonials);
         }
         if (onSettingsUpdated) onSettingsUpdated(data);
       }
@@ -252,6 +267,205 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
     updatedPhones[phoneIndex] = val;
     updatedBranches[branchIndex].phones = updatedPhones;
     setContacts({ ...contacts, branches: updatedBranches });
+  };
+
+  // 4a. Branches Handlers
+  const handleOpenBranchCreate = () => {
+    setEditingBranch({
+      id: '',
+      name: '',
+      brand: 'Meratto',
+      badge: "Do'kon",
+      address: '',
+      landmark: '',
+      phones: ['+998 98 311 33 37'],
+      hours: 'Har kuni 10:00 — 23:00',
+      status: 'OCHIQ (10:00 - 22:00)',
+      image: '/images/branches/branch_qoratosh_flagship.jpg',
+      mapUrl: ''
+    });
+    setIsBranchModalOpen(true);
+  };
+
+  const handleOpenBranchEdit = (branch) => {
+    setEditingBranch({
+      ...branch,
+      address: typeof branch.address === 'object' ? (branch.address.uz || '') : (branch.address || ''),
+      landmark: typeof branch.landmark === 'object' ? (branch.landmark.uz || '') : (branch.landmark || ''),
+      phones: Array.isArray(branch.phones) && branch.phones.length > 0 ? [...branch.phones] : ['+998 98 311 33 37']
+    });
+    setIsBranchModalOpen(true);
+  };
+
+  const handleSaveBranch = async (e) => {
+    e.preventDefault();
+    if (!editingBranch.name.trim()) return alert("Do'kon nomini kiriting");
+    setBranchSaving(true);
+    try {
+      const res = await fetch('/api/branches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingBranch)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setBranches(data.branches);
+        setIsBranchModalOpen(false);
+        showToast("Filial muvaffaqiyatli saqlandi!");
+        fetchSettings();
+      } else {
+        alert(data.error || "Filialni saqlashda xatolik");
+      }
+    } catch (err) {
+      alert("Xatolik: " + err.message);
+    } finally {
+      setBranchSaving(false);
+    }
+  };
+
+  const handleDeleteBranch = async (branchId) => {
+    if (!window.confirm("Haqiqatan ham ushbu filialni o'chirmoqchimisiz?")) return;
+    try {
+      const res = await fetch(`/api/branches?id=${branchId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setBranches(data.branches);
+        showToast("Filial o'chirildi!");
+        fetchSettings();
+      } else {
+        alert(data.error || "O'chirishda xatolik");
+      }
+    } catch (err) {
+      alert("Xatolik: " + err.message);
+    }
+  };
+
+  const handleBranchImageFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBranchImageLoading(true);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64 = event.target?.result;
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base64, filename: file.name })
+        });
+        const data = await res.json();
+        if (res.ok && data.url) {
+          setEditingBranch(prev => ({ ...prev, image: data.url }));
+          showToast("Do'kon rasmi muvaffaqiyatli yuklandi!");
+        } else {
+          setEditingBranch(prev => ({ ...prev, image: base64 }));
+        }
+      } catch (err) {
+        setEditingBranch(prev => ({ ...prev, image: base64 }));
+      } finally {
+        setBranchImageLoading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // 4b. Testimonials Handlers
+  const handleOpenTestimonialCreate = () => {
+    setEditingTestimonial({
+      id: '',
+      name: '',
+      city: 'Toshkent',
+      rating: 5,
+      date: 'Bugun',
+      outfit: 'Smart Casual / Dvoyka',
+      avatar: '/images/avatars/avatar_sardor.jpg',
+      comment: ''
+    });
+    setIsTestimonialModalOpen(true);
+  };
+
+  const handleOpenTestimonialEdit = (item) => {
+    const commentStr = typeof item.comment === 'object' && item.comment !== null
+      ? (item.comment.uz || Object.values(item.comment)[0] || '')
+      : (item.comment || '');
+    setEditingTestimonial({
+      ...item,
+      comment: commentStr
+    });
+    setIsTestimonialModalOpen(true);
+  };
+
+  const handleSaveTestimonial = async (e) => {
+    e.preventDefault();
+    if (!editingTestimonial.name.trim()) return alert("Mijoz ismini kiriting");
+    if (!editingTestimonial.comment.trim()) return alert("Fikr matnini kiriting");
+    setTestimonialSaving(true);
+    try {
+      const res = await fetch('/api/testimonials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingTestimonial)
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTestimonials(data.testimonials);
+        setIsTestimonialModalOpen(false);
+        showToast("Mijoz fikri muvaffaqiyatli saqlandi!");
+        fetchSettings();
+      } else {
+        alert(data.error || "Fikrni saqlashda xatolik");
+      }
+    } catch (err) {
+      alert("Xatolik: " + err.message);
+    } finally {
+      setTestimonialSaving(false);
+    }
+  };
+
+  const handleDeleteTestimonial = async (testId) => {
+    if (!window.confirm("Ushbu fikrni o'chirib tashlamoqchimisiz?")) return;
+    try {
+      const res = await fetch(`/api/testimonials?id=${testId}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setTestimonials(data.testimonials);
+        showToast("Fikr o'chirildi!");
+        fetchSettings();
+      } else {
+        alert(data.error || "O'chirishda xatolik");
+      }
+    } catch (err) {
+      alert("Xatolik: " + err.message);
+    }
+  };
+
+  const handleAvatarFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarImageLoading(true);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64 = event.target?.result;
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base64, filename: file.name })
+        });
+        const data = await res.json();
+        if (res.ok && data.url) {
+          setEditingTestimonial(prev => ({ ...prev, avatar: data.url }));
+          showToast("Mijoz rasmi muvaffaqiyatli yuklandi!");
+        } else {
+          setEditingTestimonial(prev => ({ ...prev, avatar: base64 }));
+        }
+      } catch (err) {
+        setEditingTestimonial(prev => ({ ...prev, avatar: base64 }));
+      } finally {
+        setAvatarImageLoading(false);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   // 5. Delete Product
@@ -564,13 +778,13 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
             </div>
           </div>
 
-          {/* Navigation Tabs (Products / Categories / Contacts) */}
-          <div className="flex items-center gap-1.5 bg-[#16181f] p-1 rounded-xl border border-white/10">
+          {/* Navigation Tabs (Products / Categories / Branches / Testimonials / Contacts) */}
+          <div className="flex items-center gap-1 bg-[#16181f] p-1 rounded-xl border border-white/10 overflow-x-auto max-w-full scrollbar-none">
             <button
               onClick={() => setActiveTab('products')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 shrink-0 ${
                 activeTab === 'products'
-                  ? 'bg-[#E5C378] text-[#07080a] shadow-sm'
+                  ? 'bg-[#E5C378] text-[#07080a] shadow-sm font-semibold'
                   : 'text-[#8f96a0] hover:text-white'
               }`}
             >
@@ -580,9 +794,9 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
 
             <button
               onClick={() => setActiveTab('categories')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 shrink-0 ${
                 activeTab === 'categories'
-                  ? 'bg-[#E5C378] text-[#07080a] shadow-sm'
+                  ? 'bg-[#E5C378] text-[#07080a] shadow-sm font-semibold'
                   : 'text-[#8f96a0] hover:text-white'
               }`}
             >
@@ -591,27 +805,71 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
             </button>
 
             <button
+              onClick={() => setActiveTab('branches')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 shrink-0 ${
+                activeTab === 'branches'
+                  ? 'bg-[#E5C378] text-[#07080a] shadow-sm font-semibold'
+                  : 'text-[#8f96a0] hover:text-white'
+              }`}
+            >
+              <Building className="w-3.5 h-3.5" />
+              <span>Filiallar ({branches.length})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('testimonials')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 shrink-0 ${
+                activeTab === 'testimonials'
+                  ? 'bg-[#E5C378] text-[#07080a] shadow-sm font-semibold'
+                  : 'text-[#8f96a0] hover:text-white'
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>Mijozlar fikrlari ({testimonials.length})</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('contacts')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 shrink-0 ${
                 activeTab === 'contacts'
-                  ? 'bg-[#E5C378] text-[#07080a] shadow-sm'
+                  ? 'bg-[#E5C378] text-[#07080a] shadow-sm font-semibold'
                   : 'text-[#8f96a0] hover:text-white'
               }`}
             >
               <Phone className="w-3.5 h-3.5" />
-              <span>Telefonlar &amp; Aloqa</span>
+              <span>Aloqa</span>
             </button>
           </div>
 
           {/* Top Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {activeTab === 'products' && (
               <button
                 onClick={handleOpenCreate}
-                className="py-2 px-3.5 rounded-xl bg-[#E5C378] text-[#07080a] font-semibold text-xs tracking-wide hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shadow-lg"
+                className="py-2 px-3.5 rounded-xl bg-[#E5C378] text-[#07080a] font-semibold text-xs tracking-wide hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shadow-lg shrink-0"
               >
                 <Plus className="w-4 h-4" />
                 <span>Yangi Tovar</span>
+              </button>
+            )}
+
+            {activeTab === 'branches' && (
+              <button
+                onClick={handleOpenBranchCreate}
+                className="py-2 px-3.5 rounded-xl bg-[#E5C378] text-[#07080a] font-semibold text-xs tracking-wide hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shadow-lg shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Yangi Filial</span>
+              </button>
+            )}
+
+            {activeTab === 'testimonials' && (
+              <button
+                onClick={handleOpenTestimonialCreate}
+                className="py-2 px-3.5 rounded-xl bg-[#E5C378] text-[#07080a] font-semibold text-xs tracking-wide hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shadow-lg shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Yangi Fikr</span>
               </button>
             )}
 
@@ -1129,6 +1387,193 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
             </div>
           </form>
         )}
+
+        {/* ==========================================================
+            VIEW: BRANCHES MANAGEMENT
+            ========================================================== */}
+        {activeTab === 'branches' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0e1015] border border-white/10 rounded-2xl p-6">
+              <div>
+                <h2 className="font-display text-lg font-medium text-white flex items-center gap-2">
+                  <Building className="w-5 h-5 text-[#E5C378]" />
+                  <span>Toshkentdagi Filiallar &amp; Do'konlar ({branches.length})</span>
+                </h2>
+                <p className="text-xs text-[#8f96a0] mt-1">
+                  Har bir filialning rasmi, manzili, mo'ljali, ish vaqti va telefonlarini o'zgartiring
+                </p>
+              </div>
+              <button
+                onClick={handleOpenBranchCreate}
+                className="py-2.5 px-4 rounded-xl bg-[#E5C378] text-[#07080a] font-semibold text-xs tracking-wide hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Yangi Filial Qo'shish</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {branches.map((b, idx) => (
+                <div key={b.id || idx} className="bg-[#0e1015] border border-white/10 rounded-2xl overflow-hidden flex flex-col justify-between hover:border-white/20 transition-all">
+                  <div>
+                    {/* Branch Image */}
+                    <div className="relative aspect-[16/10] bg-black/60 overflow-hidden">
+                      <img src={b.image} alt={b.name} className="w-full h-full object-cover" />
+                      <div className="absolute top-3 left-3 px-2.5 py-0.5 rounded-full bg-black/70 border border-white/10 font-mono text-[9px] uppercase tracking-wider text-[#E5C378]">
+                        NODE 0{idx + 1} // {b.badge}
+                      </div>
+                      <div className="absolute bottom-2.5 right-3 font-mono text-[9px] text-[#4fc79a] bg-black/70 px-2 py-0.5 rounded-full border border-white/10">
+                        {b.status || 'OCHIQ'}
+                      </div>
+                    </div>
+
+                    <div className="p-5 space-y-3">
+                      <div>
+                        <h3 className="font-display font-medium text-base text-white">{b.name}</h3>
+                        <span className="text-[11px] text-[#E5C378] font-mono">{b.brand || 'Meratto'}</span>
+                      </div>
+
+                      <div className="space-y-1.5 text-xs text-[#8f96a0]">
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-4 h-4 text-[#E5C378] shrink-0 mt-0.5" />
+                          <div>
+                            <div className="text-white">{typeof b.address === 'object' ? b.address.uz : b.address}</div>
+                            <div className="text-[11px] text-[#8f96a0] mt-0.5">{typeof b.landmark === 'object' ? b.landmark.uz : b.landmark}</div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-1 font-mono text-[11px]">
+                          <Clock className="w-3.5 h-3.5 text-[#E5C378] shrink-0" />
+                          <span>{b.hours || 'Har kuni 10:00 — 23:00'}</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-white/5 space-y-1">
+                        <div className="text-[10px] font-mono text-[#8f96a0] uppercase">Telefonlar:</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(Array.isArray(b.phones) ? b.phones : []).map((ph, pIdx) => (
+                            <span key={pIdx} className="px-2 py-0.5 rounded-md bg-[#16181f] border border-white/5 font-mono text-[11px] text-[#eef0f3]">
+                              {ph}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 border-t border-white/10 flex items-center justify-between gap-2 bg-[#12141a]">
+                    <button
+                      onClick={() => handleOpenBranchEdit(b)}
+                      className="flex-1 py-2 px-3 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-medium transition-all flex items-center justify-center gap-1.5 border border-white/5"
+                    >
+                      <Edit3 className="w-3.5 h-3.5 text-[#E5C378]" />
+                      <span>Tahrirlash</span>
+                    </button>
+                    {branches.length > 1 && (
+                      <button
+                        onClick={() => handleDeleteBranch(b.id)}
+                        className="py-2 px-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs transition-all border border-red-500/20"
+                        title="O'chirish"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ==========================================================
+            VIEW: TESTIMONIALS / REVIEWS MANAGEMENT
+            ========================================================== */}
+        {activeTab === 'testimonials' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0e1015] border border-white/10 rounded-2xl p-6">
+              <div>
+                <h2 className="font-display text-lg font-medium text-white flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-[#E5C378]" />
+                  <span>Mijozlar Fikrlari &amp; Sharhlari ({testimonials.length})</span>
+                </h2>
+                <p className="text-xs text-[#8f96a0] mt-1">
+                  Saytdagi mijozlar taassurotlarini tahrirlang, yangi xaridlar fikrini qo'shing yoki o'chiring
+                </p>
+              </div>
+              <button
+                onClick={handleOpenTestimonialCreate}
+                className="py-2.5 px-4 rounded-xl bg-[#E5C378] text-[#07080a] font-semibold text-xs tracking-wide hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Yangi Fikr Qo'shish</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {testimonials.map((t, idx) => {
+                const commentStr = typeof t.comment === 'object' && t.comment !== null
+                  ? (t.comment.uz || Object.values(t.comment)[0] || '')
+                  : (t.comment || '');
+
+                return (
+                  <div key={t.id || idx} className="bg-[#0e1015] border border-white/10 rounded-2xl p-6 flex flex-col justify-between hover:border-white/20 transition-all relative">
+                    <Quote className="absolute top-5 right-5 w-6 h-6 text-white/5 pointer-events-none" />
+
+                    <div>
+                      {/* Rating */}
+                      <div className="flex items-center gap-1 mb-3">
+                        {[...Array(Math.max(1, Math.min(5, Number(t.rating) || 5)))].map((_, i) => (
+                          <Star key={i} className="w-3.5 h-3.5 fill-[#E5C378] text-[#E5C378]" />
+                        ))}
+                        <span className="text-[11px] font-mono text-[#8f96a0] ml-1.5">{t.rating || 5}.0</span>
+                      </div>
+
+                      {/* Comment */}
+                      <p className="text-xs text-[#eef0f3] leading-relaxed mb-4 italic">
+                        "{commentStr}"
+                      </p>
+                    </div>
+
+                    <div className="pt-4 border-t border-white/10 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={t.avatar || '/images/avatars/avatar_sardor.jpg'}
+                          alt={t.name}
+                          className="w-10 h-10 rounded-full object-cover border border-white/20 shadow-md shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <h4 className="font-display font-medium text-sm text-white truncate">{t.name}</h4>
+                          <div className="text-[11px] text-[#8f96a0] truncate">{t.city}</div>
+                          {t.outfit && <div className="text-[10px] text-[#E5C378] font-mono truncate">{t.outfit}</div>}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 pt-2 border-t border-white/5">
+                        <span className="text-[10px] font-mono text-[#6b7280]">{t.date || 'Sana'}</span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => handleOpenTestimonialEdit(t)}
+                            className="py-1 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-[11px] transition-all flex items-center gap-1 border border-white/5"
+                          >
+                            <Edit3 className="w-3 h-3 text-[#E5C378]" />
+                            <span>Tahrirlash</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTestimonial(t.id)}
+                            className="py-1 px-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[11px] transition-all border border-red-500/20"
+                            title="O'chirish"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </main>
 
       {/* ==========================================================
@@ -1375,6 +1820,452 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                       <span>O'zgarishlarni Saqlash</span>
                     </>
                   )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================================
+          MODAL: EDIT / ADD BRANCH
+          ========================================================== */}
+      {isBranchModalOpen && editingBranch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-[#0e1015] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl my-8 max-h-[90vh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between pb-5 border-b border-white/10 mb-6">
+              <div>
+                <h2 className="font-display text-xl font-medium text-white flex items-center gap-2">
+                  <Building className="w-5 h-5 text-[#E5C378]" />
+                  <span>{editingBranch.id ? "Filialni Tahrirlash" : "Yangi Filial Qo'shish"}</span>
+                </h2>
+                <p className="text-xs text-[#8f96a0] mt-0.5">
+                  Do'kon rasmi, manzili, ish vaqti va telefonlarini kiriting
+                </p>
+              </div>
+              <button
+                onClick={() => setIsBranchModalOpen(false)}
+                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-[#8f96a0] hover:text-white flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveBranch} className="space-y-6">
+              {/* Branch Image Preview & Upload */}
+              <div className="p-4 rounded-xl bg-[#16181f] border border-white/10 space-y-3">
+                <label className="block text-xs font-mono uppercase tracking-wider text-[#8f96a0]">
+                  Do'kon / Filial Fotosurati
+                </label>
+                
+                <div className="flex flex-col sm:flex-row items-center gap-4">
+                  <div className="w-full sm:w-48 aspect-[16/10] rounded-xl bg-black/60 border border-white/10 overflow-hidden relative shrink-0">
+                    <img 
+                      src={editingBranch.image || '/images/branches/branch_qoratosh_flagship.jpg'} 
+                      alt="Branch preview" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="flex-1 space-y-2 w-full">
+                    <input
+                      type="file"
+                      ref={branchFileInputRef}
+                      onChange={handleBranchImageFile}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      disabled={branchImageLoading}
+                      onClick={() => branchFileInputRef.current?.click()}
+                      className="w-full py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-medium transition-all flex items-center justify-center gap-2"
+                    >
+                      {branchImageLoading ? <RefreshCw className="w-4 h-4 animate-spin text-[#E5C378]" /> : <Upload className="w-4 h-4 text-[#E5C378]" />}
+                      <span>{branchImageLoading ? "Yuklanmoqda..." : "Kompyuterdan Rasm Yuklash"}</span>
+                    </button>
+
+                    <input
+                      type="text"
+                      value={editingBranch.image || ''}
+                      onChange={(e) => setEditingBranch({ ...editingBranch, image: e.target.value })}
+                      placeholder="Yoki rasm URL manzilini kiriting..."
+                      className="w-full bg-[#0e1015] border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-[#6b7280] focus:outline-none focus:border-[#E5C378]"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Name & Brand */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2 space-y-1.5">
+                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                    Do'kon Nomi *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingBranch.name || ''}
+                    onChange={(e) => setEditingBranch({ ...editingBranch, name: e.target.value })}
+                    placeholder="Masalan: Meratto Qoratosh"
+                    required
+                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-[#E5C378]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                    Brend
+                  </label>
+                  <select
+                    value={editingBranch.brand || 'Meratto'}
+                    onChange={(e) => setEditingBranch({ ...editingBranch, brand: e.target.value })}
+                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                  >
+                    <option value="Meratto">Meratto</option>
+                    <option value="De Franko">De Franko</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Badge & Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                    Belgisi (Badge)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingBranch.badge || ''}
+                    onChange={(e) => setEditingBranch({ ...editingBranch, badge: e.target.value })}
+                    placeholder="Masalan: Bosh do'kon yoki Eksklyuziv butik"
+                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                    Status Belgisi
+                  </label>
+                  <input
+                    type="text"
+                    value={editingBranch.status || ''}
+                    onChange={(e) => setEditingBranch({ ...editingBranch, status: e.target.value })}
+                    placeholder="Masalan: OCHIQ (10:00 - 22:00)"
+                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                  />
+                </div>
+              </div>
+
+              {/* Address & Landmark */}
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                    Aniq Manzil
+                  </label>
+                  <input
+                    type="text"
+                    value={editingBranch.address || ''}
+                    onChange={(e) => setEditingBranch({ ...editingBranch, address: e.target.value })}
+                    placeholder="Masalan: Qoratosh ko'chasi, 5B-uy"
+                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                    Mo'ljal
+                  </label>
+                  <input
+                    type="text"
+                    value={editingBranch.landmark || ''}
+                    onChange={(e) => setEditingBranch({ ...editingBranch, landmark: e.target.value })}
+                    placeholder="Masalan: Samarqand Darvoza savdo markazidan o'tganda"
+                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                  />
+                </div>
+              </div>
+
+              {/* Hours & Yandex Maps Link */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                    Ish Vaqti
+                  </label>
+                  <input
+                    type="text"
+                    value={editingBranch.hours || ''}
+                    onChange={(e) => setEditingBranch({ ...editingBranch, hours: e.target.value })}
+                    placeholder="Har kuni 10:00 — 23:00"
+                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                    Yandex Xarita Havolasi
+                  </label>
+                  <input
+                    type="text"
+                    value={editingBranch.mapUrl || ''}
+                    onChange={(e) => setEditingBranch({ ...editingBranch, mapUrl: e.target.value })}
+                    placeholder="https://yandex.uz/maps/..."
+                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                  />
+                </div>
+              </div>
+
+              {/* Phones List */}
+              <div className="p-4 rounded-xl bg-[#16181f] border border-white/10 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                    Filial Telefon Raqamlari
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setEditingBranch({
+                      ...editingBranch,
+                      phones: [...(editingBranch.phones || []), '+998 ']
+                    })}
+                    className="text-[11px] text-[#E5C378] hover:underline flex items-center gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Raqam Qo'shish</span>
+                  </button>
+                </div>
+
+                <div className="space-y-2">
+                  {(editingBranch.phones || []).map((ph, phIdx) => (
+                    <div key={phIdx} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={ph}
+                        onChange={(e) => {
+                          const newPhones = [...editingBranch.phones];
+                          newPhones[phIdx] = e.target.value;
+                          setEditingBranch({ ...editingBranch, phones: newPhones });
+                        }}
+                        placeholder="+998 90 123 45 67"
+                        className="flex-1 bg-[#0e1015] border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-[#E5C378]"
+                      />
+                      {editingBranch.phones.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newPhones = editingBranch.phones.filter((_, i) => i !== phIdx);
+                            setEditingBranch({ ...editingBranch, phones: newPhones });
+                          }}
+                          className="w-8 h-8 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 flex items-center justify-center transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setIsBranchModalOpen(false)}
+                  className="py-2.5 px-4 rounded-xl bg-[#16181f] text-[#8f96a0] hover:text-white text-xs transition-colors"
+                >
+                  Bekor qilish
+                </button>
+                <button
+                  type="submit"
+                  disabled={branchSaving || branchImageLoading}
+                  className="py-2.5 px-6 rounded-xl bg-gradient-to-r from-[#E5C378] to-[#c29e50] text-[#07080a] font-semibold text-xs tracking-wide shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  {branchSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  <span>{branchSaving ? "Saqlanmoqda..." : "Filialni Saqlash"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================================
+          MODAL: EDIT / ADD TESTIMONIAL
+          ========================================================== */}
+      {isTestimonialModalOpen && editingTestimonial && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+          <div className="relative w-full max-w-xl bg-[#0e1015] border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl my-8 max-h-[90vh] overflow-y-auto">
+            
+            <div className="flex items-center justify-between pb-5 border-b border-white/10 mb-6">
+              <div>
+                <h2 className="font-display text-xl font-medium text-white flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5 text-[#E5C378]" />
+                  <span>{editingTestimonial.id ? "Fikrni Tahrirlash" : "Yangi Fikr Qo'shish"}</span>
+                </h2>
+                <p className="text-xs text-[#8f96a0] mt-0.5">
+                  Mijoz ismi, bahosi, kiygan kiyimi va sharhini kiriting
+                </p>
+              </div>
+              <button
+                onClick={() => setIsTestimonialModalOpen(false)}
+                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-[#8f96a0] hover:text-white flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTestimonial} className="space-y-5">
+              {/* Client Avatar Upload */}
+              <div className="p-4 rounded-xl bg-[#16181f] border border-white/10 flex items-center gap-4">
+                <img
+                  src={editingTestimonial.avatar || '/images/avatars/avatar_sardor.jpg'}
+                  alt="Avatar preview"
+                  className="w-14 h-14 rounded-full object-cover border-2 border-[#E5C378]/50 shadow-md shrink-0"
+                />
+                <div className="flex-1 space-y-1.5">
+                  <input
+                    type="file"
+                    ref={avatarFileInputRef}
+                    onChange={handleAvatarFile}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    disabled={avatarImageLoading}
+                    onClick={() => avatarFileInputRef.current?.click()}
+                    className="py-1.5 px-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs transition-all flex items-center gap-2"
+                  >
+                    {avatarImageLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#E5C378]" /> : <Upload className="w-3.5 h-3.5 text-[#E5C378]" />}
+                    <span>{avatarImageLoading ? "Yuklanmoqda..." : "Rasm Yuklash"}</span>
+                  </button>
+                  <input
+                    type="text"
+                    value={editingTestimonial.avatar || ''}
+                    onChange={(e) => setEditingTestimonial({ ...editingTestimonial, avatar: e.target.value })}
+                    placeholder="Yoki avatar URL manzili..."
+                    className="w-full bg-[#0e1015] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-[#6b7280] focus:outline-none focus:border-[#E5C378]"
+                  />
+                </div>
+              </div>
+
+              {/* Name & City */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                    Mijoz Ismi *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTestimonial.name || ''}
+                    onChange={(e) => setEditingTestimonial({ ...editingTestimonial, name: e.target.value })}
+                    placeholder="Masalan: Sardor Mirzayev"
+                    required
+                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                    Shahar / Filial
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTestimonial.city || ''}
+                    onChange={(e) => setEditingTestimonial({ ...editingTestimonial, city: e.target.value })}
+                    placeholder="Masalan: Toshkent (Qoratosh filiali)"
+                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                  />
+                </div>
+              </div>
+
+              {/* Rating & Purchased Outfit */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                    Baho (Yulduzlar)
+                  </label>
+                  <div className="flex items-center gap-2 bg-[#16181f] border border-white/10 rounded-xl px-3 py-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setEditingTestimonial({ ...editingTestimonial, rating: star })}
+                        className="p-1 hover:scale-110 transition-transform"
+                      >
+                        <Star
+                          className={`w-5 h-5 ${
+                            star <= (editingTestimonial.rating || 5)
+                              ? 'fill-[#E5C378] text-[#E5C378]'
+                              : 'text-white/20'
+                          }`}
+                        />
+                      </button>
+                    ))}
+                    <span className="text-xs font-mono text-[#E5C378] ml-2">
+                      {editingTestimonial.rating || 5}.0
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                    Xarid Qilingan Kiyim (Outfit)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingTestimonial.outfit || ''}
+                    onChange={(e) => setEditingTestimonial({ ...editingTestimonial, outfit: e.target.value })}
+                    placeholder="Masalan: Smart Casual Dvoyka"
+                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                  />
+                </div>
+              </div>
+
+              {/* Comment Text */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                  Mijoz Fikri (Izoh) *
+                </label>
+                <textarea
+                  rows={4}
+                  value={editingTestimonial.comment || ''}
+                  onChange={(e) => setEditingTestimonial({ ...editingTestimonial, comment: e.target.value })}
+                  placeholder="Mijozning samimiy fikrini yozing..."
+                  required
+                  className="w-full bg-[#16181f] border border-white/10 rounded-xl p-3.5 text-xs text-white leading-relaxed focus:outline-none focus:border-[#E5C378]"
+                />
+              </div>
+
+              {/* Date */}
+              <div className="space-y-1.5">
+                <label className="block text-xs font-mono uppercase text-[#8f96a0]">
+                  Sana
+                </label>
+                <input
+                  type="text"
+                  value={editingTestimonial.date || 'Bugun'}
+                  onChange={(e) => setEditingTestimonial({ ...editingTestimonial, date: e.target.value })}
+                  placeholder="Masalan: 15 Oktabr, 2026"
+                  className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2 text-xs text-white focus:outline-none focus:border-[#E5C378]"
+                />
+              </div>
+
+              {/* Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={() => setIsTestimonialModalOpen(false)}
+                  className="py-2.5 px-4 rounded-xl bg-[#16181f] text-[#8f96a0] hover:text-white text-xs transition-colors"
+                >
+                  Bekor qilish
+                </button>
+                <button
+                  type="submit"
+                  disabled={testimonialSaving || avatarImageLoading}
+                  className="py-2.5 px-6 rounded-xl bg-gradient-to-r from-[#E5C378] to-[#c29e50] text-[#07080a] font-semibold text-xs tracking-wide shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  {testimonialSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  <span>{testimonialSaving ? "Saqlanmoqda..." : "Fikrni Saqlash"}</span>
                 </button>
               </div>
             </form>

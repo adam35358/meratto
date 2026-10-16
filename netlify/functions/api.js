@@ -1,9 +1,6 @@
-import { createRequire } from 'module';
 import { getStore } from '@netlify/blobs';
-
-const require = createRequire(import.meta.url);
-const fallbackProducts = require('../../src/data/products.json');
-const fallbackSettings = require('../../src/data/siteSettings.json');
+import fallbackProducts from '../../src/data/products.json';
+import fallbackSettings from '../../src/data/siteSettings.json';
 
 // Helper to get fallback data from repo
 function getFallbackData() {
@@ -325,14 +322,120 @@ export async function handler(event, context) {
       }
     }
 
-    if (pathname === '/api/contacts' && method === 'PUT') {
+    if (pathname === '/api/contacts') {
       const settings = await getStoredSettings();
-      settings.contacts = {
-        ...settings.contacts,
-        ...body
-      };
-      await setStoredSettings(settings);
-      return { statusCode: 200, headers, body: JSON.stringify({ success: true, contacts: settings.contacts }) };
+      if (method === 'GET') {
+        return { statusCode: 200, headers, body: JSON.stringify(settings.contacts || {}) };
+      }
+      if (method === 'PUT' || method === 'POST') {
+        settings.contacts = {
+          ...settings.contacts,
+          ...body
+        };
+        await setStoredSettings(settings);
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, contacts: settings.contacts }) };
+      }
+    }
+
+    // Branches CRUD (/api/branches)
+    if (pathname === '/api/branches' || pathname.startsWith('/api/branches/')) {
+      const settings = await getStoredSettings();
+      let branches = settings.branches || [];
+
+      if (method === 'GET') {
+        return { statusCode: 200, headers, body: JSON.stringify(branches) };
+      }
+
+      if (method === 'POST' || method === 'PUT') {
+        if (Array.isArray(body)) {
+          settings.branches = body;
+          await setStoredSettings(settings);
+          return { statusCode: 200, headers, body: JSON.stringify({ success: true, branches: settings.branches }) };
+        }
+
+        const branchId = body.id || (body.name || '').toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') || `branch_${Date.now()}`;
+        const branchItem = {
+          id: branchId,
+          name: body.name || 'Filial',
+          brand: body.brand || 'Meratto',
+          badge: body.badge || "Do'kon",
+          address: body.address || '',
+          landmark: body.landmark || '',
+          phones: Array.isArray(body.phones) ? body.phones : (body.phones ? [body.phones] : []),
+          hours: body.hours || 'Har kuni 10:00 — 23:00',
+          status: body.status || 'OCHIQ (10:00 - 22:00)',
+          image: body.image || '/images/branches/branch_qoratosh_flagship.jpg',
+          mapUrl: body.mapUrl || ''
+        };
+
+        const existingIdx = branches.findIndex(b => b.id === branchId);
+        if (existingIdx !== -1) {
+          branches[existingIdx] = { ...branches[existingIdx], ...branchItem };
+        } else {
+          branches.push(branchItem);
+        }
+
+        settings.branches = branches;
+        await setStoredSettings(settings);
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, branch: branchItem, branches }) };
+      }
+
+      if (method === 'DELETE') {
+        const idFromPath = pathname.replace('/api/branches/', '').replace('/api/branches', '');
+        const targetId = idFromPath || body.id;
+        settings.branches = (settings.branches || []).filter(b => b.id !== targetId);
+        await setStoredSettings(settings);
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, branches: settings.branches }) };
+      }
+    }
+
+    // Testimonials CRUD (/api/testimonials)
+    if (pathname === '/api/testimonials' || pathname.startsWith('/api/testimonials/')) {
+      const settings = await getStoredSettings();
+      let testimonials = settings.testimonials || [];
+
+      if (method === 'GET') {
+        return { statusCode: 200, headers, body: JSON.stringify(testimonials) };
+      }
+
+      if (method === 'POST' || method === 'PUT') {
+        if (Array.isArray(body)) {
+          settings.testimonials = body;
+          await setStoredSettings(settings);
+          return { statusCode: 200, headers, body: JSON.stringify({ success: true, testimonials: settings.testimonials }) };
+        }
+
+        const testId = body.id || Date.now();
+        const testItem = {
+          id: testId,
+          name: body.name || 'Mijoz',
+          city: body.city || 'Toshkent',
+          rating: Number(body.rating) || 5,
+          date: body.date || 'Bugun',
+          outfit: body.outfit || 'Kostyum / Dvoyka',
+          avatar: body.avatar || '/images/avatars/avatar_sardor.jpg',
+          comment: body.comment || ''
+        };
+
+        const existingIdx = testimonials.findIndex(t => String(t.id) === String(testId));
+        if (existingIdx !== -1) {
+          testimonials[existingIdx] = { ...testimonials[existingIdx], ...testItem };
+        } else {
+          testimonials.unshift(testItem);
+        }
+
+        settings.testimonials = testimonials;
+        await setStoredSettings(settings);
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, testimonial: testItem, testimonials }) };
+      }
+
+      if (method === 'DELETE') {
+        const idFromPath = pathname.replace('/api/testimonials/', '').replace('/api/testimonials', '');
+        const targetId = idFromPath || body.id;
+        settings.testimonials = (settings.testimonials || []).filter(t => String(t.id) !== String(targetId));
+        await setStoredSettings(settings);
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, testimonials: settings.testimonials }) };
+      }
     }
 
     // 6. Image Upload (/api/upload)

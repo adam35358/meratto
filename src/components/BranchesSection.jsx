@@ -3,16 +3,37 @@ import { MapPin, Phone, Clock, ExternalLink, Navigation } from 'lucide-react';
 import { branches } from '../data/branches';
 
 export default function BranchesSection({ lang, t, branchesData = [] }) {
-  // Merge dynamic phones from Admin Panel
-  const displayBranches = branches.map(b => {
-    const override = Array.isArray(branchesData) ? branchesData.find(item => item.id === b.id) : null;
-    return {
-      ...b,
-      phones: override?.phones && override.phones.length > 0 ? override.phones : b.phones
-    };
-  });
+  // Merge dynamic branches from Admin Panel or fallback to static branches
+  const displayBranches = Array.isArray(branchesData) && branchesData.length > 0
+    ? branchesData.map((b, idx) => {
+        const fallback = branches.find(item => item.id === b.id) || {};
+        const addr = typeof b.address === 'object' && b.address !== null
+          ? (b.address[lang] || b.address.uz || Object.values(b.address)[0] || '')
+          : (b.address || fallback.address?.[lang] || fallback.address?.uz || '');
+        const lnd = typeof b.landmark === 'object' && b.landmark !== null
+          ? (b.landmark[lang] || b.landmark.uz || Object.values(b.landmark)[0] || '')
+          : (b.landmark || fallback.landmark?.[lang] || fallback.landmark?.uz || '');
 
-  const [selectedBranch, setSelectedBranch] = useState(displayBranches[0]);
+        return {
+          ...fallback,
+          ...b,
+          addressStr: addr,
+          landmarkStr: lnd,
+          image: b.image || fallback.image || '/images/branches/branch_qoratosh_flagship.jpg',
+          badge: b.badge || fallback.badge || `Filial 0${idx + 1}`,
+          hours: b.hours || fallback.hours || '10:00 — 23:00',
+          status: b.status || fallback.status || 'OCHIQ (10:00 - 22:00)',
+          phones: Array.isArray(b.phones) && b.phones.length > 0 ? b.phones : (fallback.phones || [])
+        };
+      })
+    : branches.map(b => ({
+        ...b,
+        addressStr: b.address[lang] || b.address.uz,
+        landmarkStr: b.landmark[lang] || b.landmark.uz,
+        status: 'OCHIQ (10:00 - 22:00)'
+      }));
+
+  const [selectedBranch, setSelectedBranch] = useState(displayBranches[0] || {});
   const [showMap, setShowMap] = useState(false);
 
   return (
@@ -36,10 +57,10 @@ export default function BranchesSection({ lang, t, branchesData = [] }) {
         {/* 3 Branches Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           {displayBranches.map((branch, idx) => {
-            const isSelected = selectedBranch.id === branch.id;
+            const isSelected = selectedBranch?.id === branch.id;
             return (
               <div 
-                key={branch.id}
+                key={branch.id || idx}
                 data-reveal="card"
                 style={{ '--delay': idx }}
                 onClick={() => setSelectedBranch(branch)}
@@ -64,7 +85,7 @@ export default function BranchesSection({ lang, t, branchesData = [] }) {
 
                   <div className="absolute bottom-2.5 right-3 flex items-center gap-1.5 font-mono text-[9px] text-[#4fc79a] bg-[#07080a]/80 px-2 py-0.5 rounded-full border border-white/10">
                     <span className="w-1.5 h-1.5 rounded-full bg-[#4fc79a] animate-pulse" />
-                    <span>OCHIQ (10:00 - 22:00)</span>
+                    <span>{branch.status || 'OCHIQ (10:00 - 22:00)'}</span>
                   </div>
                 </div>
 
@@ -80,14 +101,14 @@ export default function BranchesSection({ lang, t, branchesData = [] }) {
                       <div className="flex items-start gap-2">
                         <MapPin className="w-4 h-4 text-[#E5C378] shrink-0 mt-0.5" />
                         <div>
-                          <strong className="text-white font-normal">{branch.address[lang] || branch.address.uz}</strong>
-                          <div className="text-[11px] text-[#8f96a0] mt-0.5">{branch.landmark[lang] || branch.landmark.uz}</div>
+                          <strong className="text-white font-normal">{branch.addressStr}</strong>
+                          {branch.landmarkStr && <div className="text-[11px] text-[#8f96a0] mt-0.5">{branch.landmarkStr}</div>}
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 pt-1 text-[#8f96a0] font-mono text-[11px]">
                         <Clock className="w-3.5 h-3.5 text-[#E5C378] shrink-0" />
-                        <span>{t.branches.workingHours}</span>
+                        <span>{branch.hours || t.branches.workingHours}</span>
                       </div>
                     </div>
                   </div>

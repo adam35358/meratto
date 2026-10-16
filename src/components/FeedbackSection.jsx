@@ -2,7 +2,11 @@ import React from 'react';
 import { Star, ShieldCheck, Quote } from 'lucide-react';
 import { testimonials } from '../data/testimonials';
 
-export default function FeedbackSection({ lang, t }) {
+export default function FeedbackSection({ lang, t, testimonialsData = [] }) {
+  const displayItems = Array.isArray(testimonialsData) && testimonialsData.length > 0 
+    ? testimonialsData 
+    : testimonials;
+
   return (
     <section id="reviews" data-reveal="scale" className="scene-exit py-20 sm:py-28 relative overflow-hidden">
       
@@ -27,28 +31,33 @@ export default function FeedbackSection({ lang, t }) {
 
         {/* Testimonials Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {testimonials.map((item, idx) => (
-            <div 
-              key={item.id}
-              data-reveal="card"
-              style={{ '--delay': idx }}
-              className="relative p-6 sm:p-7 rounded-2xl woufx-panel hover:border-white/20 transition-all duration-300 flex flex-col justify-between"
-            >
-              <Quote className="absolute top-6 right-6 w-6 h-6 text-white/10" />
+          {displayItems.map((item, idx) => {
+            const commentText = typeof item.comment === 'object' && item.comment !== null
+              ? (item.comment[lang] || item.comment.uz || Object.values(item.comment)[0] || '')
+              : (item.comment || '');
 
-              <div>
-                {/* 5-Star Rating */}
-                <div className="flex items-center gap-1 mb-4">
-                  {[...Array(item.rating)].map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-[#E5C378] text-[#E5C378]" />
-                  ))}
+            return (
+              <div 
+                key={item.id || idx}
+                data-reveal="card"
+                style={{ '--delay': idx }}
+                className="relative p-6 sm:p-7 rounded-2xl woufx-panel hover:border-white/20 transition-all duration-300 flex flex-col justify-between"
+              >
+                <Quote className="absolute top-6 right-6 w-6 h-6 text-white/10" />
+
+                <div>
+                  {/* Rating Stars */}
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(Math.max(1, Math.min(5, Number(item.rating) || 5)))].map((_, i) => (
+                      <Star key={i} className="w-3.5 h-3.5 fill-[#E5C378] text-[#E5C378]" />
+                    ))}
+                  </div>
+
+                  {/* Comment Text */}
+                  <p className="text-xs sm:text-sm text-[#eef0f3] leading-relaxed mb-6 font-normal">
+                    "{commentText}"
+                  </p>
                 </div>
-
-                {/* Comment Text */}
-                <p className="text-xs sm:text-sm text-[#eef0f3] leading-relaxed mb-6 font-normal">
-                  "{item.comment[lang] || item.comment.uz}"
-                </p>
-              </div>
 
               {/* Author Info */}
               <div className="pt-4 border-t border-white/[0.08] flex items-center gap-3">
@@ -67,8 +76,9 @@ export default function FeedbackSection({ lang, t }) {
                 </div>
               </div>
 
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
       </div>

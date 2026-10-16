@@ -70,7 +70,11 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  // Fetch live categories and contacts settings
+  // Dynamic Branches & Testimonials State
+  const [siteBranches, setSiteBranches] = useState([]);
+  const [siteTestimonials, setSiteTestimonials] = useState([]);
+
+  // Fetch live categories, contacts, branches, and testimonials settings
   useEffect(() => {
     fetch('/api/settings')
       .then(res => res.ok ? res.json() : null)
@@ -84,6 +88,12 @@ export default function App() {
           }
           if (data.contacts) {
             setSiteContacts(data.contacts);
+          }
+          if (Array.isArray(data.branches)) {
+            setSiteBranches(data.branches);
+          }
+          if (Array.isArray(data.testimonials)) {
+            setSiteTestimonials(data.testimonials);
           }
         }
       })
@@ -319,6 +329,12 @@ export default function App() {
           if (newSettings.contacts) {
             setSiteContacts(newSettings.contacts);
           }
+          if (Array.isArray(newSettings.branches)) {
+            setSiteBranches(newSettings.branches);
+          }
+          if (Array.isArray(newSettings.testimonials)) {
+            setSiteTestimonials(newSettings.testimonials);
+          }
         }}
       />
 
@@ -461,13 +477,13 @@ export default function App() {
         <SectionDivider variant="glow-line" title="04 // MIJOZLAR TAASSUROTIDAN" />
 
         {/* 4. Customer Feedback / Testimonials */}
-        <FeedbackSection lang={lang} t={t} />
+        <FeedbackSection lang={lang} t={t} testimonialsData={siteTestimonials} />
 
         {/* Transition Divider 4 */}
         <SectionDivider variant="glow-line" title="05 // TOSHKENTNING 3 TA FILIALI" />
 
         {/* 5. 3 Branches & Interactive Map */}
-        <BranchesSection lang={lang} t={t} branchesData={siteContacts.branches} />
+        <BranchesSection lang={lang} t={t} branchesData={siteBranches} />
 
         {/* Transition Divider 5 */}
         <SectionDivider variant="glow-line" title="06 // TEZKOR BUYURTMA VA KONSULTATSIYA" />
