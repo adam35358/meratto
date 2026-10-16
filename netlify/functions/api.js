@@ -220,6 +220,18 @@ export async function handler(event, context) {
 
       if (method === 'POST') {
         const items = await getStoredProducts();
+        const reqImages = Array.isArray(body.images) && body.images.length > 0 
+          ? body.images.slice(0, 5) 
+          : [body.image || '/images/products/placeholder.jpg'];
+        const rawPositions = Array.isArray(body.imagePositions) ? body.imagePositions : [];
+        const imagePositions = reqImages.map((_, idx) => {
+          const p = rawPositions[idx] || (idx === 0 ? body.imagePosition : null);
+          return {
+            x: typeof p?.x === 'number' ? Math.max(0, Math.min(100, Math.round(p.x))) : 50,
+            y: typeof p?.y === 'number' ? Math.max(0, Math.min(100, Math.round(p.y))) : 50
+          };
+        });
+
         const newProduct = {
           id: body.id || `p_${Date.now()}`,
           code: body.code || `MRT-${Math.floor(100 + Math.random() * 900)}`,
@@ -232,9 +244,10 @@ export async function handler(event, context) {
           availableBranches: Array.isArray(body.availableBranches) && body.availableBranches.length > 0
             ? body.availableBranches
             : ['meratto-qoratosh', 'meratto-chilonzor', 'de-franko-qoratosh'],
-          image: body.image || '/images/products/placeholder.jpg',
-          images: Array.isArray(body.images) && body.images.length > 0 ? body.images.slice(0, 5) : [body.image || '/images/products/placeholder.jpg'],
-          imagePosition: body.imagePosition && typeof body.imagePosition === 'object' ? body.imagePosition : { x: 50, y: 50 },
+          image: body.image || reqImages[0] || '/images/products/placeholder.jpg',
+          images: reqImages,
+          imagePosition: imagePositions[0] || { x: 50, y: 50 },
+          imagePositions: imagePositions,
           lookItems: Array.isArray(body.lookItems) ? body.lookItems : [],
           isLook: Boolean(body.isLook || (body.lookItems && body.lookItems.length > 0)),
           description: typeof body.description === 'object' ? body.description : { uz: body.description || '', ru: '', en: '' },
@@ -259,6 +272,22 @@ export async function handler(event, context) {
         }
 
         const existing = items[index];
+        const reqImages = Array.isArray(body.images) 
+          ? body.images.slice(0, 5) 
+          : (Array.isArray(existing.images) && existing.images.length > 0 ? existing.images : [body.image || existing.image]);
+
+        const rawPositions = Array.isArray(body.imagePositions) 
+          ? body.imagePositions 
+          : (Array.isArray(existing.imagePositions) ? existing.imagePositions : []);
+
+        const imagePositions = reqImages.map((_, idx) => {
+          const p = rawPositions[idx] || (idx === 0 ? (body.imagePosition || existing.imagePosition) : null);
+          return {
+            x: typeof p?.x === 'number' ? Math.max(0, Math.min(100, Math.round(p.x))) : 50,
+            y: typeof p?.y === 'number' ? Math.max(0, Math.min(100, Math.round(p.y))) : 50
+          };
+        });
+
         const updated = {
           ...existing,
           ...body,
@@ -268,9 +297,10 @@ export async function handler(event, context) {
           fabric: typeof body.fabric === 'object' ? { ...existing.fabric, ...body.fabric } : { ...existing.fabric, uz: body.fabric || existing.fabric?.uz },
           price: body.price !== undefined ? Number(body.price) : existing.price,
           oldPrice: body.oldPrice !== undefined ? (body.oldPrice ? Number(body.oldPrice) : null) : existing.oldPrice,
-          image: body.image || existing.image,
-          images: Array.isArray(body.images) ? body.images.slice(0, 5) : [body.image || existing.image],
-          imagePosition: body.imagePosition !== undefined ? body.imagePosition : (existing.imagePosition || { x: 50, y: 50 }),
+          image: body.image || reqImages[0] || existing.image,
+          images: reqImages,
+          imagePosition: imagePositions[0] || { x: 50, y: 50 },
+          imagePositions: imagePositions,
           lookItems: Array.isArray(body.lookItems) ? body.lookItems : (existing.lookItems || []),
           isLook: body.isLook !== undefined ? body.isLook : Boolean(existing.isLook || (existing.lookItems && existing.lookItems.length > 0))
         };

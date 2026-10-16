@@ -100,7 +100,7 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
             alt={product.name[lang] || product.name.uz} 
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
             style={{
-              objectPosition: `${product.imagePosition?.x ?? 50}% ${product.imagePosition?.y ?? 50}%`
+              objectPosition: `${(product.imagePositions?.[0]?.x ?? product.imagePosition?.x ?? 50)}% ${(product.imagePositions?.[0]?.y ?? product.imagePosition?.y ?? 50)}%`
             }}
             loading={index < 8 ? "eager" : "lazy"}
             decoding="async"

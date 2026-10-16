@@ -155,71 +155,101 @@ export async function handleApiRequest(req, res, env = {}) {
     if (method === 'POST') {
       const body = await readBody(req);
       const items = readProducts();
+      const reqImages = Array.isArray(body.images) && body.images.length > 0 
+        ? body.images.slice(0, 5) 
+        : [body.image || '/images/products/placeholder.jpg'];
+      const rawPositions = Array.isArray(body.imagePositions) ? body.imagePositions : [];
+      const imagePositions = reqImages.map((_, idx) => {
+        const p = rawPositions[idx] || (idx === 0 ? body.imagePosition : null);
+        return {
+          x: typeof p?.x === 'number' ? Math.max(0, Math.min(100, Math.round(p.x))) : 50,
+          y: typeof p?.y === 'number' ? Math.max(0, Math.min(100, Math.round(p.y))) : 50
+        };
+      });
+
       const newProduct = {
-        id: body.id || `p_${Date.now()}`,
-        code: body.code || `MRT-${Math.floor(100 + Math.random() * 900)}`,
-        category: body.category || 'dvoyka',
-        name: typeof body.name === 'object' ? body.name : { uz: body.name || 'Yangi mahsulot', ru: '', en: '' },
-        price: Number(body.price) || 0,
-        oldPrice: body.oldPrice ? Number(body.oldPrice) : null,
-        badge: body.badge || 'New',
-        modelCode: body.modelCode || body.code || 'MRT-NEW',
-        availableBranches: Array.isArray(body.availableBranches) && body.availableBranches.length > 0
-          ? body.availableBranches
-          : ['meratto-qoratosh', 'meratto-chilonzor', 'de-franko-qoratosh'],
-        image: body.image || '/images/products/placeholder.jpg',
-        images: Array.isArray(body.images) && body.images.length > 0 ? body.images.slice(0, 5) : [body.image || '/images/products/placeholder.jpg'],
-        imagePosition: body.imagePosition && typeof body.imagePosition === 'object' ? body.imagePosition : { x: 50, y: 50 },
-        lookItems: Array.isArray(body.lookItems) ? body.lookItems : [],
-        isLook: Boolean(body.isLook || (body.lookItems && body.lookItems.length > 0)),
-        description: typeof body.description === 'object' ? body.description : { uz: body.description || '', ru: '', en: '' },
-        fabric: typeof body.fabric === 'object' ? body.fabric : { uz: body.fabric || 'Premium sifat', ru: '', en: '' },
-        sizes: Array.isArray(body.sizes) ? body.sizes : ['M (48)', 'L (50)', 'XL (52)'],
-        colors: Array.isArray(body.colors) ? body.colors : ['#101827']
-      };
+          id: body.id || `p_${Date.now()}`,
+          code: body.code || `MRT-${Math.floor(100 + Math.random() * 900)}`,
+          category: body.category || 'dvoyka',
+          name: typeof body.name === 'object' ? body.name : { uz: body.name || 'Yangi mahsulot', ru: '', en: '' },
+          price: Number(body.price) || 0,
+          oldPrice: body.oldPrice ? Number(body.oldPrice) : null,
+          badge: body.badge || 'New',
+          modelCode: body.modelCode || body.code || 'MRT-NEW',
+          availableBranches: Array.isArray(body.availableBranches) && body.availableBranches.length > 0
+            ? body.availableBranches
+            : ['meratto-qoratosh', 'meratto-chilonzor', 'de-franko-qoratosh'],
+          image: body.image || reqImages[0] || '/images/products/placeholder.jpg',
+          images: reqImages,
+          imagePosition: imagePositions[0] || { x: 50, y: 50 },
+          imagePositions: imagePositions,
+          lookItems: Array.isArray(body.lookItems) ? body.lookItems : [],
+          isLook: Boolean(body.isLook || (body.lookItems && body.lookItems.length > 0)),
+          description: typeof body.description === 'object' ? body.description : { uz: body.description || '', ru: '', en: '' },
+          fabric: typeof body.fabric === 'object' ? body.fabric : { uz: body.fabric || 'Premium sifat', ru: '', en: '' },
+          sizes: Array.isArray(body.sizes) ? body.sizes : ['M (48)', 'L (50)', 'XL (52)'],
+          colors: Array.isArray(body.colors) ? body.colors : ['#101827']
+        };
 
-      items.unshift(newProduct);
-      writeProducts(items);
-      sendJson(res, 201, { success: true, product: newProduct });
-      return true;
-    }
-
-    // PUT: Update product
-    if (method === 'PUT') {
-      const body = await readBody(req);
-      const idFromPath = pathname.replace('/api/products/', '').replace('/api/products', '');
-      const targetId = idFromPath || body.id;
-
-      if (!targetId) {
-        sendJson(res, 400, { success: false, error: "Mahsulot ID si ko'rsatilmadi" });
+        items.unshift(newProduct);
+        writeProducts(items);
+        sendJson(res, 201, { success: true, product: newProduct });
         return true;
       }
 
-      const items = readProducts();
-      const index = items.findIndex(p => String(p.id) === String(targetId));
+      // PUT: Update product
+      if (method === 'PUT') {
+        const body = await readBody(req);
+        const idFromPath = pathname.replace('/api/products/', '').replace('/api/products', '');
+        const targetId = idFromPath || body.id;
 
-      if (index === -1) {
-        sendJson(res, 404, { success: false, error: "Mahsulot topilmadi" });
-        return true;
-      }
+        if (!targetId) {
+          sendJson(res, 400, { success: false, error: "Mahsulot ID si ko'rsatilmadi" });
+          return true;
+        }
 
-      // Merge fields carefully
-      const existing = items[index];
-      const updated = {
-        ...existing,
-        ...body,
-        id: existing.id, // preserve immutable ID
-        name: typeof body.name === 'object' ? { ...existing.name, ...body.name } : { ...existing.name, uz: body.name || existing.name?.uz },
-        description: typeof body.description === 'object' ? { ...existing.description, ...body.description } : { ...existing.description, uz: body.description || existing.description?.uz },
-        fabric: typeof body.fabric === 'object' ? { ...existing.fabric, ...body.fabric } : { ...existing.fabric, uz: body.fabric || existing.fabric?.uz },
-        price: body.price !== undefined ? Number(body.price) : existing.price,
-        oldPrice: body.oldPrice !== undefined ? (body.oldPrice ? Number(body.oldPrice) : null) : existing.oldPrice,
-        image: body.image || existing.image,
-        images: Array.isArray(body.images) ? body.images.slice(0, 5) : [body.image || existing.image],
-        imagePosition: body.imagePosition !== undefined ? body.imagePosition : (existing.imagePosition || { x: 50, y: 50 }),
-        lookItems: Array.isArray(body.lookItems) ? body.lookItems : (existing.lookItems || []),
-        isLook: body.isLook !== undefined ? body.isLook : Boolean(existing.isLook || (existing.lookItems && existing.lookItems.length > 0))
-      };
+        const items = readProducts();
+        const index = items.findIndex(p => String(p.id) === String(targetId));
+
+        if (index === -1) {
+          sendJson(res, 404, { success: false, error: "Mahsulot topilmadi" });
+          return true;
+        }
+
+        // Merge fields carefully
+        const existing = items[index];
+        const reqImages = Array.isArray(body.images) 
+          ? body.images.slice(0, 5) 
+          : (Array.isArray(existing.images) && existing.images.length > 0 ? existing.images : [body.image || existing.image]);
+
+        const rawPositions = Array.isArray(body.imagePositions) 
+          ? body.imagePositions 
+          : (Array.isArray(existing.imagePositions) ? existing.imagePositions : []);
+
+        const imagePositions = reqImages.map((_, idx) => {
+          const p = rawPositions[idx] || (idx === 0 ? (body.imagePosition || existing.imagePosition) : null);
+          return {
+            x: typeof p?.x === 'number' ? Math.max(0, Math.min(100, Math.round(p.x))) : 50,
+            y: typeof p?.y === 'number' ? Math.max(0, Math.min(100, Math.round(p.y))) : 50
+          };
+        });
+
+        const updated = {
+          ...existing,
+          ...body,
+          id: existing.id, // preserve immutable ID
+          name: typeof body.name === 'object' ? { ...existing.name, ...body.name } : { ...existing.name, uz: body.name || existing.name?.uz },
+          description: typeof body.description === 'object' ? { ...existing.description, ...body.description } : { ...existing.description, uz: body.description || existing.description?.uz },
+          fabric: typeof body.fabric === 'object' ? { ...existing.fabric, ...body.fabric } : { ...existing.fabric, uz: body.fabric || existing.fabric?.uz },
+          price: body.price !== undefined ? Number(body.price) : existing.price,
+          oldPrice: body.oldPrice !== undefined ? (body.oldPrice ? Number(body.oldPrice) : null) : existing.oldPrice,
+          image: body.image || reqImages[0] || existing.image,
+          images: reqImages,
+          imagePosition: imagePositions[0] || { x: 50, y: 50 },
+          imagePositions: imagePositions,
+          lookItems: Array.isArray(body.lookItems) ? body.lookItems : (existing.lookItems || []),
+          isLook: body.isLook !== undefined ? body.isLook : Boolean(existing.isLook || (existing.lookItems && existing.lookItems.length > 0))
+        };
 
       items[index] = updated;
       writeProducts(items);

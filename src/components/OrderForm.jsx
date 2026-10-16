@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Send, CheckCircle2, ShieldCheck, MapPin, CreditCard, Truck, Store, Sparkles, AlertCircle } from 'lucide-react';
+import { Send, CheckCircle2, ShieldCheck, MapPin, CreditCard, Truck, Store, Sparkles, AlertCircle, MessageSquare } from 'lucide-react';
 import { branches } from '../data/branches';
 import { sendTelegramOrder } from '../services/telegram';
 
@@ -314,18 +314,26 @@ export default function OrderForm({ prefillProduct, cart, clearCart, lang, t }) 
               </div>
             </div>
 
-            {/* Notes Field */}
+            {/* Dedicated Izohlar (Order Notes / Instructions) Field */}
             <div>
-              <label className="block font-mono text-[10px] text-[#8f96a0] uppercase tracking-[0.16em] mb-2">
-                {t.form.notesLabel}
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="font-mono text-xs text-[#E5C378] uppercase tracking-[0.16em] flex items-center gap-1.5 font-medium">
+                  <MessageSquare className="w-3.5 h-3.5 text-[#E5C378]" />
+                  <span>{t.form.notesLabel || "Izohlar (Yetkazish manzili, vaqti yoki kiyim o'lchami bo'yicha)"}</span>
+                </label>
+                <span className="text-[10px] font-mono text-[#8f96a0]">(Ixtiyoriy)</span>
+              </div>
               <textarea
-                rows="2"
+                rows="3"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder={t.form.notesPlaceholder}
-                className="w-full px-4 py-3 rounded-xl bg-[#07080a] border border-white/10 text-white placeholder-[#5f6671] focus:outline-none focus:border-[#E5C378]/60 transition-colors text-sm"
+                placeholder={t.form.notesPlaceholder || "Yetkazish manzili, qulay vaqt yoki bo'y-vazn bo'yicha izoh qoldiring..."}
+                className="w-full px-4 py-3 rounded-xl bg-[#07080a] border border-white/10 text-white placeholder-[#5f6671] focus:outline-none focus:border-[#E5C378]/60 transition-colors text-sm leading-relaxed resize-none"
               />
+              <div className="text-[10px] text-[#8f96a0] mt-1.5 flex items-center gap-1 font-mono">
+                <span className="text-[#E5C378]">💡</span>
+                <span>Aniq manzil, dom kodi, etaj yoki qulay vaqtni shu yerga yozishingiz mumkin.</span>
+              </div>
             </div>
 
             {/* Submit Button in WOUFX Style */}

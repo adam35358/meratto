@@ -52,6 +52,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
 
   // Edit / Add Product Modal State
   const [editingProduct, setEditingProduct] = useState(null);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalSaving, setModalSaving] = useState(false);
   const [modalError, setModalError] = useState('');
@@ -612,13 +613,19 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       ? product.images.slice(0, 5)
       : (product.image ? [product.image] : []);
 
-    const prodPosition = product.imagePosition && typeof product.imagePosition.x === 'number'
-      ? { x: Number(product.imagePosition.x), y: Number(product.imagePosition.y) }
-      : { x: 50, y: 50 };
+    const existingPositions = Array.isArray(product.imagePositions) ? product.imagePositions : [];
+    const prodPositions = prodImages.map((img, idx) => {
+      const p = existingPositions[idx] || (idx === 0 ? product.imagePosition : null);
+      return {
+        x: typeof p?.x === 'number' ? Math.max(0, Math.min(100, Math.round(p.x))) : 50,
+        y: typeof p?.y === 'number' ? Math.max(0, Math.min(100, Math.round(p.y))) : 50
+      };
+    });
 
     const prodLookItems = Array.isArray(product.lookItems) ? product.lookItems : [];
     const isLook = Boolean(product.isLook || prodLookItems.length > 0);
 
+    setActiveImageIndex(0);
     setEditingProduct({
       ...product,
       code: product.code || product.modelCode || `MRT-${Math.floor(100 + Math.random() * 900)}`,
@@ -635,7 +642,8 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       category: product.category || (categories[0]?.id || 'dvoyka'),
       image: product.image || prodImages[0] || '',
       images: prodImages,
-      imagePosition: prodPosition,
+      imagePosition: prodPositions[0] || { x: 50, y: 50 },
+      imagePositions: prodPositions,
       isLook,
       lookItems: prodLookItems
     });
@@ -650,6 +658,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
 
   const handleOpenCreate = () => {
     const allBranchIds = getBranchIds();
+    setActiveImageIndex(0);
     setEditingProduct({
       id: '',
       code: `MRT-${Math.floor(100 + Math.random() * 900)}`,
@@ -667,6 +676,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       image: '',
       images: [],
       imagePosition: { x: 50, y: 50 },
+      imagePositions: [],
       isLook: false,
       lookItems: []
     });
@@ -761,13 +771,22 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
           const newUrl = data.url;
           setEditingProduct(prev => {
             const currentImgs = Array.isArray(prev.images) ? [...prev.images] : (prev.image ? [prev.image] : []);
+            const currentPositions = Array.isArray(prev.imagePositions) ? [...prev.imagePositions] : [];
+            while (currentPositions.length < currentImgs.length) {
+              currentPositions.push({ x: 50, y: 50 });
+            }
+
             if (!currentImgs.includes(newUrl) && currentImgs.length < 5) {
               currentImgs.push(newUrl);
+              currentPositions.push({ x: 50, y: 50 });
+              setActiveImageIndex(currentImgs.length - 1);
             }
             return {
               ...prev,
               image: prev.image || newUrl,
-              images: currentImgs
+              images: currentImgs,
+              imagePositions: currentPositions,
+              imagePosition: currentPositions[0] || { x: 50, y: 50 }
             };
           });
           showToast("Rasm muvaffaqiyatli yuklandi!");
@@ -788,13 +807,22 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
     if (!cleanUrl) return;
     setEditingProduct(prev => {
       const currentImgs = Array.isArray(prev.images) ? [...prev.images] : (prev.image ? [prev.image] : []);
+      const currentPositions = Array.isArray(prev.imagePositions) ? [...prev.imagePositions] : [];
+      while (currentPositions.length < currentImgs.length) {
+        currentPositions.push({ x: 50, y: 50 });
+      }
+
       if (!currentImgs.includes(cleanUrl) && currentImgs.length < 5) {
         currentImgs.push(cleanUrl);
+        currentPositions.push({ x: 50, y: 50 });
+        setActiveImageIndex(currentImgs.length - 1);
       }
       return {
         ...prev,
         image: prev.image || cleanUrl,
-        images: currentImgs
+        images: currentImgs,
+        imagePositions: currentPositions,
+        imagePosition: currentPositions[0] || { x: 50, y: 50 }
       };
     });
     showToast("Rasm havolasi qo'shildi!");
@@ -802,45 +830,115 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
 
   const handleRemoveProductImage = (idxToRemove) => {
     setEditingProduct(prev => {
-      const updated = (prev.images || []).filter((_, i) => i !== idxToRemove);
-      const newCover = prev.image === prev.images[idxToRemove] ? (updated[0] || '') : prev.image;
+      const currentImgs = Array.isArray(prev.images) ? [...prev.images] : [];
+      const currentPositions = Array.isArray(prev.imagePositions) ? [...prev.imagePositions] : [];
+      const updated = currentImgs.filter((_, i) => i !== idxToRemove);
+      const updatedPositions = currentPositions.filter((_, i) => i !== idxToRemove);
+      const newCover = prev.image === currentImgs[idxToRemove] ? (updated[0] || '') : prev.image;
       return {
         ...prev,
         images: updated,
+        imagePositions: updatedPositions,
+        imagePosition: updatedPositions[0] || { x: 50, y: 50 },
         image: newCover
       };
     });
+    setActiveImageIndex(prev => {
+      if (prev === idxToRemove) return 0;
+      if (prev > idxToRemove) return prev - 1;
+      return prev;
+    });
   };
 
-  const handleSetCoverImage = (imgUrl) => {
-    setEditingProduct(prev => ({
-      ...prev,
-      image: imgUrl
-    }));
+  const handleSetCoverImage = (imgUrl, targetIdx) => {
+    setEditingProduct(prev => {
+      const currentImgs = [...(prev.images || [])];
+      const currentPositions = [...(prev.imagePositions || [])];
+      while (currentPositions.length < currentImgs.length) {
+        currentPositions.push({ x: 50, y: 50 });
+      }
+
+      const idx = targetIdx !== undefined ? targetIdx : currentImgs.indexOf(imgUrl);
+      if (idx > 0 && idx < currentImgs.length) {
+        const [movedImg] = currentImgs.splice(idx, 1);
+        const [movedPos] = currentPositions.splice(idx, 1);
+        currentImgs.unshift(movedImg);
+        currentPositions.unshift(movedPos);
+        setActiveImageIndex(0);
+        return {
+          ...prev,
+          image: movedImg,
+          images: currentImgs,
+          imagePositions: currentPositions,
+          imagePosition: currentPositions[0] || { x: 50, y: 50 }
+        };
+      }
+
+      return {
+        ...prev,
+        image: imgUrl
+      };
+    });
     showToast("Asosiy rasm (muqova) etib belgilandi!");
   };
 
   const handleAdjustImagePosition = (deltaX, deltaY) => {
     setEditingProduct(prev => {
-      const current = prev.imagePosition || { x: 50, y: 50 };
+      const imgs = prev.images || [];
+      const idx = Math.min(activeImageIndex, Math.max(0, imgs.length - 1));
+      const positions = Array.isArray(prev.imagePositions) ? [...prev.imagePositions] : [];
+      while (positions.length < imgs.length) {
+        positions.push({ x: 50, y: 50 });
+      }
+      const current = positions[idx] || prev.imagePosition || { x: 50, y: 50 };
       const newX = Math.max(0, Math.min(100, Math.round((current.x ?? 50) + deltaX)));
       const newY = Math.max(0, Math.min(100, Math.round((current.y ?? 50) + deltaY)));
+      positions[idx] = { x: newX, y: newY };
+
       return {
         ...prev,
-        imagePosition: { x: newX, y: newY }
+        imagePositions: positions,
+        imagePosition: idx === 0 ? positions[0] : (prev.imagePosition || positions[0])
       };
     });
   };
 
   const handleSetImagePosition = (axis, val) => {
     setEditingProduct(prev => {
-      const current = prev.imagePosition || { x: 50, y: 50 };
+      const imgs = prev.images || [];
+      const idx = Math.min(activeImageIndex, Math.max(0, imgs.length - 1));
+      const positions = Array.isArray(prev.imagePositions) ? [...prev.imagePositions] : [];
+      while (positions.length < imgs.length) {
+        positions.push({ x: 50, y: 50 });
+      }
+      const current = positions[idx] || prev.imagePosition || { x: 50, y: 50 };
+      positions[idx] = {
+        ...current,
+        [axis]: Number(val)
+      };
+
       return {
         ...prev,
-        imagePosition: {
-          ...current,
-          [axis]: Number(val)
-        }
+        imagePositions: positions,
+        imagePosition: idx === 0 ? positions[0] : (prev.imagePosition || positions[0])
+      };
+    });
+  };
+
+  const handleResetActiveImagePosition = () => {
+    setEditingProduct(prev => {
+      const imgs = prev.images || [];
+      const idx = Math.min(activeImageIndex, Math.max(0, imgs.length - 1));
+      const positions = Array.isArray(prev.imagePositions) ? [...prev.imagePositions] : [];
+      while (positions.length < imgs.length) {
+        positions.push({ x: 50, y: 50 });
+      }
+      positions[idx] = { x: 50, y: 50 };
+
+      return {
+        ...prev,
+        imagePositions: positions,
+        imagePosition: idx === 0 ? { x: 50, y: 50 } : (prev.imagePosition || { x: 50, y: 50 })
       };
     });
   };
@@ -911,6 +1009,15 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
     const allBranchIds = getBranchIds();
     const coverImage = editingProduct.image || currentImages[0] || '';
 
+    const rawPositions = Array.isArray(editingProduct.imagePositions) ? editingProduct.imagePositions : [];
+    const finalPositions = currentImages.map((_, idx) => {
+      const p = rawPositions[idx] || (idx === 0 ? editingProduct.imagePosition : null);
+      return {
+        x: typeof p?.x === 'number' ? Math.max(0, Math.min(100, Math.round(p.x))) : 50,
+        y: typeof p?.y === 'number' ? Math.max(0, Math.min(100, Math.round(p.y))) : 50
+      };
+    });
+
     const payload = {
       id: editingProduct.id || undefined,
       code: productCode,
@@ -929,7 +1036,8 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       badge: editingProduct.badge || '',
       image: coverImage,
       images: currentImages,
-      imagePosition: editingProduct.imagePosition || { x: 50, y: 50 },
+      imagePosition: finalPositions[0] || { x: 50, y: 50 },
+      imagePositions: finalPositions,
       isLook: Boolean(editingProduct.isLook || (editingProduct.lookItems && editingProduct.lookItems.length > 0)),
       lookItems: Array.isArray(editingProduct.lookItems) ? editingProduct.lookItems.filter(i => i.name?.trim()) : [],
       description: {
@@ -1366,7 +1474,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                             alt={name}
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             style={{
-                              objectPosition: `${p.imagePosition?.x ?? 50}% ${p.imagePosition?.y ?? 50}%`
+                              objectPosition: `${(p.imagePositions?.[0]?.x ?? p.imagePosition?.x ?? 50)}% ${(p.imagePositions?.[0]?.y ?? p.imagePosition?.y ?? 50)}%`
                             }}
                             onError={(e) => {
                               e.target.onerror = null;
@@ -2256,56 +2364,86 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
 
             <form onSubmit={handleSaveProduct} className="space-y-6">
               
-              {/* SECTION 1: PRODUCT IMAGES (UP TO 5) & FRAMING / POSITIONING */}
+              {/* SECTION 1: PRODUCT IMAGES (UP TO 5) & INDEPENDENT FRAMING / POSITIONING */}
               <div className="bg-[#16181f] border border-white/5 rounded-2xl p-4 sm:p-5 space-y-4">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-mono uppercase tracking-wider text-[#E5C378] font-medium flex items-center gap-1.5">
                     <ImageIcon className="w-4 h-4 text-[#E5C378]" />
                     <span>📸 Mahsulot Rasmlari ({(editingProduct.images || []).length}/5 ta)</span>
                   </label>
-                  <span className="text-[11px] text-[#8f96a0] font-mono">5 tagacha rasm</span>
+                  <span className="text-[11px] text-[#8f96a0] font-mono">Har bir rasm mustaqil kadrga (surishga) ega</span>
                 </div>
 
                 {/* Thumbnails list */}
                 <div className="flex flex-wrap items-center gap-2.5">
                   {(editingProduct.images || []).map((img, idx) => {
-                    const isCover = editingProduct.image === img;
+                    const isCover = idx === 0 || editingProduct.image === img;
+                    const isSelected = activeImageIndex === idx;
+                    const pos = editingProduct.imagePositions?.[idx] || (idx === 0 ? editingProduct.imagePosition : null) || { x: 50, y: 50 };
+
                     return (
                       <div 
                         key={idx} 
-                        className={`relative w-20 h-24 rounded-xl overflow-hidden border-2 transition-all group ${
-                          isCover ? 'border-[#E5C378] ring-2 ring-[#E5C378]/30 shadow-lg' : 'border-white/10 hover:border-white/30'
+                        onClick={() => setActiveImageIndex(idx)}
+                        className={`relative w-20 h-24 rounded-xl overflow-hidden border-2 transition-all group cursor-pointer ${
+                          isSelected 
+                            ? 'border-[#E5C378] ring-2 ring-[#E5C378]/60 scale-105 shadow-xl shadow-[#E5C378]/20 z-10' 
+                            : 'border-white/10 hover:border-white/40 opacity-75 hover:opacity-100'
                         }`}
+                        title={`#${idx + 1}-rasmni tanlash va kadrini sozlash`}
                       >
                         <img 
                           src={img} 
                           alt={`Rasm ${idx + 1}`} 
-                          onClick={() => handleSetCoverImage(img)}
-                          className="w-full h-full object-cover cursor-pointer"
+                          className="w-full h-full object-cover"
                           style={{
-                            objectPosition: `${editingProduct.imagePosition?.x ?? 50}% ${editingProduct.imagePosition?.y ?? 50}%`
+                            objectPosition: `${pos.x ?? 50}% ${pos.y ?? 50}%`
                           }}
                         />
+
+                        {/* Asosiy (Cover) Badge */}
                         {isCover && (
                           <div className="absolute top-1 left-1 px-1 py-0.5 rounded bg-[#E5C378] text-[#07080a] font-mono text-[8px] font-bold uppercase tracking-wider">
                             Asosiy
                           </div>
                         )}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRemoveProductImage(idx);
-                          }}
-                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500/80 hover:bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          title="Rasmni o'chirish"
-                        >
-                          <Trash2 className="w-2.5 h-2.5" />
-                        </button>
-                        <div 
-                          onClick={() => handleSetCoverImage(img)}
-                          className="absolute bottom-0 inset-x-0 bg-black/75 text-[9px] font-mono text-center py-0.5 text-white/80 cursor-pointer hover:text-[#E5C378]"
-                        >
+
+                        {/* Active Selection Indicator */}
+                        {isSelected && (
+                          <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-[#E5C378] text-[#07080a] flex items-center justify-center text-[9px] font-bold">
+                            ✓
+                          </div>
+                        )}
+
+                        {/* Action buttons (Delete & Set Cover) */}
+                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-1 flex items-center justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                          {!isCover && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSetCoverImage(img, idx);
+                              }}
+                              className="px-1 py-0.5 rounded bg-[#E5C378]/80 hover:bg-[#E5C378] text-[#07080a] text-[8px] font-mono font-bold"
+                              title="Asosiy muqova qilish"
+                            >
+                              ★ Asosiy
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRemoveProductImage(idx);
+                            }}
+                            className="p-1 rounded-full bg-red-500/80 hover:bg-red-500 text-white ml-auto"
+                            title="Rasmni o'chirish"
+                          >
+                            <Trash2 className="w-2.5 h-2.5" />
+                          </button>
+                        </div>
+
+                        <div className="absolute bottom-0 inset-x-0 bg-black/75 text-[9px] font-mono text-center py-0.5 text-white/80 pointer-events-none group-hover:opacity-0 transition-opacity">
                           #{idx + 1}
                         </div>
                       </div>
@@ -2326,14 +2464,14 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                         onClick={() => fileInputRef.current?.click()}
                         disabled={imageUploadLoading}
                         className="w-20 h-24 rounded-xl border border-dashed border-[#E5C378]/40 hover:border-[#E5C378] bg-[#E5C378]/5 hover:bg-[#E5C378]/10 text-[#E5C378] flex flex-col items-center justify-center gap-1.5 transition-all"
-                        title="Rasm yuklash"
+                        title="Yangi rasm yuklash"
                       >
                         {imageUploadLoading ? (
                           <RefreshCw className="w-5 h-5 animate-spin" />
                         ) : (
                           <>
                             <Upload className="w-5 h-5" />
-                            <span className="text-[10px] font-mono">+ Qo'shish</span>
+                            <span className="text-[10px] font-mono">+ Rasm ({5 - (editingProduct.images || []).length} ta joy)</span>
                           </>
                         )}
                       </button>
@@ -2373,122 +2511,153 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                   </div>
                 )}
 
-                {/* Interactive Framing / Positioning (Surish) */}
-                {editingProduct.image && (
-                  <div className="pt-3 border-t border-white/5 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-mono uppercase tracking-wider text-[#E5C378] font-medium flex items-center gap-1.5">
-                        <Move className="w-3.5 h-3.5 text-[#E5C378]" />
-                        <span>Saytda ko'rinish joylashuvi (Surish / Framing)</span>
-                      </label>
-                      <span className="text-[10px] font-mono text-[#8f96a0]">
-                        X: {editingProduct.imagePosition?.x ?? 50}% | Y: {editingProduct.imagePosition?.y ?? 50}%
-                      </span>
-                    </div>
+                {/* Interactive Framing / Positioning (Alohida-alohida surish) */}
+                {(editingProduct.images || []).length > 0 && (() => {
+                  const currentImgs = editingProduct.images || [];
+                  const safeActiveIdx = Math.min(activeImageIndex, Math.max(0, currentImgs.length - 1));
+                  const currentImageSrc = currentImgs[safeActiveIdx] || editingProduct.image;
+                  const currentPositions = editingProduct.imagePositions || [];
+                  const currentPos = currentPositions[safeActiveIdx] || (safeActiveIdx === 0 ? editingProduct.imagePosition : null) || { x: 50, y: 50 };
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center bg-[#0e1015] p-3.5 rounded-xl border border-white/10">
-                      {/* Visual Preview Box (3:4 aspect ratio as site card) */}
-                      <div className="flex flex-col items-center">
-                        <div className="relative w-32 aspect-[3/4] rounded-xl overflow-hidden border border-[#E5C378]/40 bg-black/60 shadow-xl">
-                          <img
-                            src={editingProduct.image}
-                            alt="Crop Preview"
-                            className="w-full h-full object-cover transition-all duration-150"
-                            style={{
-                              objectPosition: `${editingProduct.imagePosition?.x ?? 50}% ${editingProduct.imagePosition?.y ?? 50}%`
-                            }}
-                          />
-                          <div className="absolute inset-0 border border-white/10 pointer-events-none" />
-                          <div className="absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 rounded text-[8px] font-mono text-[#E5C378]">
-                            Saytdagi kadr
-                          </div>
+                  return (
+                    <div className="pt-3 border-t border-white/5 space-y-3">
+                      {/* Image Selector Tabs */}
+                      <div className="flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[11px] font-mono text-[#8f96a0] mr-1">
+                            Kadrni sozlash uchun rasmni tanlang:
+                          </span>
+                          {currentImgs.map((_, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => setActiveImageIndex(idx)}
+                              className={`px-3 py-1 rounded-lg text-xs font-mono transition-all flex items-center gap-1.5 ${
+                                safeActiveIdx === idx
+                                  ? 'bg-[#E5C378] text-[#07080a] font-bold shadow-md shadow-[#E5C378]/20 ring-1 ring-white/20'
+                                  : 'bg-white/5 text-[#8f96a0] hover:bg-white/10 hover:text-white border border-white/10'
+                              }`}
+                            >
+                              <span>🖼️ {idx === 0 ? "1-Rasm (Asosiy)" : `${idx + 1}-Rasm`}</span>
+                              <span className="text-[10px] opacity-75">
+                                ({currentPositions[idx]?.x ?? 50}%, {currentPositions[idx]?.y ?? 50}%)
+                              </span>
+                            </button>
+                          ))}
                         </div>
+
+                        <span className="text-[11px] font-mono text-[#E5C378] font-medium bg-[#E5C378]/10 px-2.5 py-1 rounded-lg border border-[#E5C378]/20">
+                          #{safeActiveIdx + 1}-Rasm: X: {currentPos.x ?? 50}% | Y: {currentPos.y ?? 50}%
+                        </span>
                       </div>
 
-                      {/* Directional Nudges & Sliders */}
-                      <div className="space-y-3">
-                        <div className="text-[11px] text-[#8f96a0]">
-                          Rasmni o'ng-chap, yuqori-pastga surish uchun tugmalar yoki slayderlardan foydalaning:
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center bg-[#0e1015] p-4 rounded-xl border border-white/10">
+                        {/* Visual Preview Box (3:4 aspect ratio as site card) */}
+                        <div className="flex flex-col items-center">
+                          <div className="relative w-36 aspect-[3/4] rounded-2xl overflow-hidden border-2 border-[#E5C378] bg-black/70 shadow-2xl">
+                            <img
+                              src={currentImageSrc}
+                              alt={`Kadr #${safeActiveIdx + 1}`}
+                              className="w-full h-full object-cover transition-all duration-150"
+                              style={{
+                                objectPosition: `${currentPos.x ?? 50}% ${currentPos.y ?? 50}%`
+                              }}
+                            />
+                            <div className="absolute inset-0 border border-white/10 pointer-events-none" />
+                            <div className="absolute bottom-1.5 right-1.5 bg-black/85 px-2 py-0.5 rounded text-[9px] font-mono text-[#E5C378] border border-[#E5C378]/30">
+                              #{safeActiveIdx + 1}-rasm kadri
+                            </div>
+                            <div className="absolute top-1.5 left-1.5 bg-black/80 px-1.5 py-0.5 rounded text-[8px] font-mono text-white/80">
+                              {safeActiveIdx === 0 ? "Asosiy" : `${safeActiveIdx + 1}-qo'shimcha`}
+                            </div>
+                          </div>
                         </div>
 
-                        {/* 4 Nudge Direction Buttons */}
-                        <div className="flex items-center justify-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => handleAdjustImagePosition(-5, 0)}
-                            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs hover:border-[#E5C378]/40"
-                            title="Chapga surish"
-                          >
-                            ⬅️ Chap
-                          </button>
-                          <div className="flex flex-col gap-1.5">
+                        {/* Directional Nudges & Sliders */}
+                        <div className="space-y-3.5">
+                          <div className="text-[11px] text-[#8f96a0] leading-snug">
+                            <strong className="text-white">#{safeActiveIdx + 1}-rasmni</strong> o'ng-chap, yuqori-pastga surish uchun tugmalar yoki slayderlardan foydalaning:
+                          </div>
+
+                          {/* 4 Nudge Direction Buttons */}
+                          <div className="flex items-center justify-center gap-2">
                             <button
                               type="button"
-                              onClick={() => handleAdjustImagePosition(0, -5)}
-                              className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs hover:border-[#E5C378]/40"
-                              title="Tepaga surish"
+                              onClick={() => handleAdjustImagePosition(-5, 0)}
+                              className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs hover:border-[#E5C378]/40 active:scale-95 transition-all font-mono"
+                              title="Chapga surish"
                             >
-                              ⬆️ Tepaga
+                              ⬅️ Chap
+                            </button>
+                            <div className="flex flex-col gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => handleAdjustImagePosition(0, -5)}
+                                className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs hover:border-[#E5C378]/40 active:scale-95 transition-all font-mono"
+                                title="Tepaga surish"
+                              >
+                                ⬆️ Tepaga
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleAdjustImagePosition(0, 5)}
+                                className="px-3.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs hover:border-[#E5C378]/40 active:scale-95 transition-all font-mono"
+                                title="Pastga surish"
+                              >
+                                ⬇️ Pastga
+                              </button>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleAdjustImagePosition(5, 0)}
+                              className="px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs hover:border-[#E5C378]/40 active:scale-95 transition-all font-mono"
+                              title="O'ngga surish"
+                            >
+                              ➡️ O'ng
                             </button>
                             <button
                               type="button"
-                              onClick={() => handleAdjustImagePosition(0, 5)}
-                              className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs hover:border-[#E5C378]/40"
-                              title="Pastga surish"
+                              onClick={handleResetActiveImagePosition}
+                              className="px-2.5 py-2 rounded-lg bg-[#E5C378]/10 hover:bg-[#E5C378]/25 border border-[#E5C378]/40 text-[#E5C378] text-xs font-mono font-medium active:scale-95 transition-all"
+                              title="Markazga qaytarish (50/50)"
                             >
-                              ⬇️ Pastga
+                              🎯 50/50
                             </button>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleAdjustImagePosition(5, 0)}
-                            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs hover:border-[#E5C378]/40"
-                            title="O'ngga surish"
-                          >
-                            ➡️ O'ng
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setEditingProduct(prev => ({ ...prev, imagePosition: { x: 50, y: 50 } }))}
-                            className="px-2.5 py-2 rounded-lg bg-[#E5C378]/10 hover:bg-[#E5C378]/20 border border-[#E5C378]/30 text-[#E5C378] text-xs font-mono font-medium"
-                            title="Markazlashtirish"
-                          >
-                            🎯 50/50
-                          </button>
-                        </div>
 
-                        {/* Sliders */}
-                        <div className="space-y-1.5 text-xs font-mono">
-                          <div className="flex items-center justify-between text-[10px] text-[#8f96a0]">
-                            <span>Gorizontal (Chap ↔ O'ng):</span>
-                            <span>{editingProduct.imagePosition?.x ?? 50}%</span>
-                          </div>
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={editingProduct.imagePosition?.x ?? 50}
-                            onChange={(e) => handleSetImagePosition('x', e.target.value)}
-                            className="w-full accent-[#E5C378] cursor-pointer"
-                          />
+                          {/* Sliders */}
+                          <div className="space-y-2 text-xs font-mono bg-white/[0.02] p-2.5 rounded-xl border border-white/5">
+                            <div className="flex items-center justify-between text-[11px] text-[#8f96a0]">
+                              <span>Gorizontal (Chap ↔ O'ng):</span>
+                              <span className="text-[#E5C378] font-bold">{currentPos.x ?? 50}%</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={currentPos.x ?? 50}
+                              onChange={(e) => handleSetImagePosition('x', e.target.value)}
+                              className="w-full accent-[#E5C378] cursor-pointer"
+                            />
 
-                          <div className="flex items-center justify-between text-[10px] text-[#8f96a0] pt-1">
-                            <span>Vertikal (Yuqori ↔ Past):</span>
-                            <span>{editingProduct.imagePosition?.y ?? 50}%</span>
+                            <div className="flex items-center justify-between text-[11px] text-[#8f96a0] pt-1.5">
+                              <span>Vertikal (Yuqori ↔ Past):</span>
+                              <span className="text-[#E5C378] font-bold">{currentPos.y ?? 50}%</span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              value={currentPos.y ?? 50}
+                              onChange={(e) => handleSetImagePosition('y', e.target.value)}
+                              className="w-full accent-[#E5C378] cursor-pointer"
+                            />
                           </div>
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={editingProduct.imagePosition?.y ?? 50}
-                            onChange={(e) => handleSetImagePosition('y', e.target.value)}
-                            className="w-full accent-[#E5C378] cursor-pointer"
-                          />
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
 
               {/* SECTION 2: PRODUCT TEXTS & CAPTIONS */}

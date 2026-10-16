@@ -6,9 +6,13 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
   if (!isOpen || !product) return null;
 
   const [selectedSize, setSelectedSize] = useState(product.sizes[0] || 'L');
-  const [activeImage, setActiveImage] = useState(product.images?.[0] || product.image);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
+
+  const prodImages = Array.isArray(product.images) && product.images.length > 0 ? product.images : [product.image];
+  const activeImage = prodImages[activeImageIndex] || prodImages[0] || product.image;
+  const activePosition = product.imagePositions?.[activeImageIndex] || (activeImageIndex === 0 ? product.imagePosition : null) || { x: 50, y: 50 };
 
   const formatPrice = (num) => {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -54,7 +58,7 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
                 alt={product.name[lang] || product.name.uz}
                 className="w-full h-full object-cover transition-transform duration-700 ease-silk group-hover:scale-105"
                 style={{
-                  objectPosition: `${product.imagePosition?.x ?? 50}% ${product.imagePosition?.y ?? 50}%`
+                  objectPosition: `${activePosition.x ?? 50}% ${activePosition.y ?? 50}%`
                 }}
               />
               <div className="absolute top-3.5 left-3.5 flex flex-col gap-1.5">
@@ -77,28 +81,32 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
             </div>
 
             {/* Thumbnail selector (up to 5 images) */}
-            {product.images && product.images.length > 1 && (
+            {prodImages.length > 1 && (
               <div className="flex gap-2.5 mt-4 overflow-x-auto pb-1 scrollbar-none">
-                {product.images.map((img, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveImage(img)}
-                    className={`w-14 h-18 sm:w-16 sm:h-20 rounded-xl overflow-hidden border transition-all duration-300 shrink-0 ${
-                      activeImage === img 
-                        ? 'border-[#E5C378] ring-1 ring-[#E5C378]/50 scale-105 shadow-lg' 
-                        : 'border-white/[0.08] opacity-50 hover:opacity-100'
-                    }`}
-                  >
-                    <img 
-                      src={img} 
-                      alt={`Thumbnail ${idx + 1}`} 
-                      className="w-full h-full object-cover" 
-                      style={{
-                        objectPosition: `${product.imagePosition?.x ?? 50}% ${product.imagePosition?.y ?? 50}%`
-                      }}
-                    />
-                  </button>
-                ))}
+                {prodImages.map((img, idx) => {
+                  const thumbPos = product.imagePositions?.[idx] || (idx === 0 ? product.imagePosition : null) || { x: 50, y: 50 };
+                  const isSelected = activeImageIndex === idx;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => setActiveImageIndex(idx)}
+                      className={`w-14 h-18 sm:w-16 sm:h-20 rounded-xl overflow-hidden border transition-all duration-300 shrink-0 ${
+                        isSelected 
+                          ? 'border-[#E5C378] ring-1 ring-[#E5C378]/50 scale-105 shadow-lg' 
+                          : 'border-white/[0.08] opacity-50 hover:opacity-100'
+                      }`}
+                    >
+                      <img 
+                        src={img} 
+                        alt={`Thumbnail ${idx + 1}`} 
+                        className="w-full h-full object-cover" 
+                        style={{
+                          objectPosition: `${thumbPos.x ?? 50}% ${thumbPos.y ?? 50}%`
+                        }}
+                      />
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
