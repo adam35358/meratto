@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ShoppingBag, Zap, Check, ShieldCheck, MapPin, Store } from 'lucide-react';
+import { X, ShoppingBag, Zap, Check, ShieldCheck, MapPin, Store, Sparkles } from 'lucide-react';
 import { branches } from '../data/branches';
 
 export default function ProductModal({ product, isOpen, onClose, lang, t, onAddToCart, onQuickOrder }) {
@@ -52,13 +52,22 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
               <img 
                 src={activeImage} 
                 alt={product.name[lang] || product.name.uz}
-                className="w-full h-full object-cover object-top transition-transform duration-700 ease-silk group-hover:scale-105"
+                className="w-full h-full object-cover transition-transform duration-700 ease-silk group-hover:scale-105"
+                style={{
+                  objectPosition: `${product.imagePosition?.x ?? 50}% ${product.imagePosition?.y ?? 50}%`
+                }}
               />
               <div className="absolute top-3.5 left-3.5 flex flex-col gap-1.5">
                 <span className="woufx-badge bg-black/70 backdrop-blur-md border-white/[0.12] text-white">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span>{product.code || 'MRT-ARCHIVE'}</span>
                 </span>
+                {(product.isLook || (product.lookItems && product.lookItems.length > 0)) && (
+                  <span className="woufx-badge bg-[#E5C378]/25 border-[#E5C378]/40 text-[#E5C378] font-bold flex items-center gap-1">
+                    <Sparkles className="w-3 h-3 text-[#E5C378]" />
+                    <span>TAYYOR LOOK</span>
+                  </span>
+                )}
                 {product.badge && (
                   <span className="woufx-badge bg-[#E5C378]/20 border-[#E5C378]/40 text-[#E5C378] font-bold">
                     {product.badge}
@@ -67,20 +76,27 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
               </div>
             </div>
 
-            {/* Thumbnail selector */}
+            {/* Thumbnail selector (up to 5 images) */}
             {product.images && product.images.length > 1 && (
-              <div className="flex gap-3 mt-4">
+              <div className="flex gap-2.5 mt-4 overflow-x-auto pb-1 scrollbar-none">
                 {product.images.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setActiveImage(img)}
-                    className={`w-16 h-20 rounded-xl overflow-hidden border transition-all duration-300 ${
+                    className={`w-14 h-18 sm:w-16 sm:h-20 rounded-xl overflow-hidden border transition-all duration-300 shrink-0 ${
                       activeImage === img 
-                        ? 'border-white ring-1 ring-white/30 scale-105' 
+                        ? 'border-[#E5C378] ring-1 ring-[#E5C378]/50 scale-105 shadow-lg' 
                         : 'border-white/[0.08] opacity-50 hover:opacity-100'
                     }`}
                   >
-                    <img src={img} alt="Thumbnail" className="w-full h-full object-cover object-top" />
+                    <img 
+                      src={img} 
+                      alt={`Thumbnail ${idx + 1}`} 
+                      className="w-full h-full object-cover" 
+                      style={{
+                        objectPosition: `${product.imagePosition?.x ?? 50}% ${product.imagePosition?.y ?? 50}%`
+                      }}
+                    />
                   </button>
                 ))}
               </div>
@@ -134,6 +150,33 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
                   </span>
                 )}
               </div>
+
+              {/* Tayyor Look Breakdown (Komplekt tarkibi va alohida narxlari) */}
+              {product.lookItems && product.lookItems.length > 0 && (
+                <div className="mt-4 p-4 rounded-2xl bg-gradient-to-br from-[#E5C378]/10 via-[#16181f] to-transparent border border-[#E5C378]/30 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs font-mono text-[#E5C378]">
+                    <span className="font-semibold uppercase tracking-wider flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-[#E5C378]" />
+                      <span>Tayyor Look Tarkibi (Komplekt):</span>
+                    </span>
+                    <span className="text-[10px] text-[#8f96a0] font-normal">{product.lookItems.length} ta element</span>
+                  </div>
+                  
+                  <div className="divide-y divide-white/5 pt-1">
+                    {product.lookItems.map((item, idx) => (
+                      <div key={item.id || idx} className="py-2 flex items-center justify-between text-xs">
+                        <span className="text-white font-medium flex items-center gap-2">
+                          <span className="text-[#E5C378] font-mono text-[11px] font-bold">{idx + 1}.</span>
+                          <span>{item.name}</span>
+                        </span>
+                        <span className="font-mono text-[#E5C378] font-semibold">
+                          {formatPrice(item.price)} <span className="text-[10px] font-normal text-[#8f96a0]">so'm</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Description */}
               <p className="mt-4 text-xs sm:text-sm text-woufx-muted leading-relaxed font-sans font-light">

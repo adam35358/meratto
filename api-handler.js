@@ -168,7 +168,10 @@ export async function handleApiRequest(req, res, env = {}) {
           ? body.availableBranches
           : ['meratto-qoratosh', 'meratto-chilonzor', 'de-franko-qoratosh'],
         image: body.image || '/images/products/placeholder.jpg',
-        images: Array.isArray(body.images) && body.images.length > 0 ? body.images : [body.image || '/images/products/placeholder.jpg'],
+        images: Array.isArray(body.images) && body.images.length > 0 ? body.images.slice(0, 5) : [body.image || '/images/products/placeholder.jpg'],
+        imagePosition: body.imagePosition && typeof body.imagePosition === 'object' ? body.imagePosition : { x: 50, y: 50 },
+        lookItems: Array.isArray(body.lookItems) ? body.lookItems : [],
+        isLook: Boolean(body.isLook || (body.lookItems && body.lookItems.length > 0)),
         description: typeof body.description === 'object' ? body.description : { uz: body.description || '', ru: '', en: '' },
         fabric: typeof body.fabric === 'object' ? body.fabric : { uz: body.fabric || 'Premium sifat', ru: '', en: '' },
         sizes: Array.isArray(body.sizes) ? body.sizes : ['M (48)', 'L (50)', 'XL (52)'],
@@ -212,7 +215,10 @@ export async function handleApiRequest(req, res, env = {}) {
         price: body.price !== undefined ? Number(body.price) : existing.price,
         oldPrice: body.oldPrice !== undefined ? (body.oldPrice ? Number(body.oldPrice) : null) : existing.oldPrice,
         image: body.image || existing.image,
-        images: Array.isArray(body.images) ? body.images : [body.image || existing.image]
+        images: Array.isArray(body.images) ? body.images.slice(0, 5) : [body.image || existing.image],
+        imagePosition: body.imagePosition !== undefined ? body.imagePosition : (existing.imagePosition || { x: 50, y: 50 }),
+        lookItems: Array.isArray(body.lookItems) ? body.lookItems : (existing.lookItems || []),
+        isLook: body.isLook !== undefined ? body.isLook : Boolean(existing.isLook || (existing.lookItems && existing.lookItems.length > 0))
       };
 
       items[index] = updated;
@@ -604,6 +610,57 @@ export async function handleApiRequest(req, res, env = {}) {
 
       const tgResult = await tgRes.json();
 
+      // 5b. Automatic customer tracking in settings.customers
+      const customerName = (data.name || 'Mijoz').trim();
+      const customerPhone = (data.phone || '').trim();
+      const cleanPhone = customerPhone.replace(/[^\d+]/g, '');
+
+      if (cleanPhone) {
+        try {
+          const settings = readSettings();
+          let customers = settings.customers || [];
+          const existingIdx = customers.findIndex(c => (c.phone || '').replace(/[^\d+]/g, '') === cleanPhone);
+
+          const orderRecord = {
+            orderId: `ord_${Date.now()}`,
+            date: data.date || new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' }),
+            products: data.productsText || (Array.isArray(data.items) ? data.items.map(i => `${i.name} [${i.size || 'std'}] x${i.quantity || 1}`).join(', ') : (data.products || 'Xarid')),
+            total: Number(data.totalSum) || 0,
+            deliveryType: data.deliveryType || "Kuryer",
+            paymentType: data.paymentType || "Click / Payme",
+            branch: data.branchName || "",
+            notes: data.notes || ""
+          };
+
+          if (existingIdx > -1) {
+            customers[existingIdx].ordersCount = (customers[existingIdx].ordersCount || 1) + 1;
+            customers[existingIdx].totalSpent = (customers[existingIdx].totalSpent || 0) + (Number(data.totalSum) || 0);
+            customers[existingIdx].lastOrderDate = orderRecord.date;
+            if (customerName && customerName !== 'Mijoz') {
+              customers[existingIdx].name = customerName;
+            }
+            customers[existingIdx].orders = [orderRecord, ...(customers[existingIdx].orders || [])];
+          } else {
+            customers.unshift({
+              id: `cust_${Date.now()}`,
+              name: customerName,
+              phone: customerPhone,
+              firstOrderDate: orderRecord.date,
+              lastOrderDate: orderRecord.date,
+              ordersCount: 1,
+              totalSpent: Number(data.totalSum) || 0,
+              notes: data.notes || "",
+              orders: [orderRecord]
+            });
+          }
+
+          settings.customers = customers;
+          writeSettings(settings);
+        } catch (custErr) {
+          console.error('[API] Customer auto-save error:', custErr);
+        }
+      }
+
       if (tgResult.ok) {
         sendJson(res, 200, { success: true, messageId: tgResult.result?.message_id });
       } else {
@@ -612,6 +669,31 @@ export async function handleApiRequest(req, res, env = {}) {
       return true;
     } catch (e) {
       sendJson(res, 500, { success: false, error: e.message });
+      return true;
+    }
+  }
+
+  // 6. Customers Management (/api/customers)
+  if (pathname === '/api/customers' || pathname.startsWith('/api/customers/')) {
+    const settings = readSettings();
+    if (method === 'GET') {
+      sendJson(res, 200, settings.customers || []);
+      return true;
+    }
+    if (method === 'DELETE') {
+      const idFromPath = pathname.replace('/api/customers/', '').replace('/api/customers', '');
+      const idFromQuery = url.searchParams.get('id');
+      const body = await readBody(req);
+      const targetId = idFromPath || idFromQuery || body?.id;
+
+      if (!targetId) {
+        sendJson(res, 400, { success: false, error: "Mijoz ID si ko'rsatilmadi" });
+        return true;
+      }
+
+      settings.customers = (settings.customers || []).filter(c => c.id !== targetId);
+      writeSettings(settings);
+      sendJson(res, 200, { success: true, customers: settings.customers });
       return true;
     }
   }

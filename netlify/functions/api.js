@@ -233,7 +233,10 @@ export async function handler(event, context) {
             ? body.availableBranches
             : ['meratto-qoratosh', 'meratto-chilonzor', 'de-franko-qoratosh'],
           image: body.image || '/images/products/placeholder.jpg',
-          images: Array.isArray(body.images) && body.images.length > 0 ? body.images : [body.image || '/images/products/placeholder.jpg'],
+          images: Array.isArray(body.images) && body.images.length > 0 ? body.images.slice(0, 5) : [body.image || '/images/products/placeholder.jpg'],
+          imagePosition: body.imagePosition && typeof body.imagePosition === 'object' ? body.imagePosition : { x: 50, y: 50 },
+          lookItems: Array.isArray(body.lookItems) ? body.lookItems : [],
+          isLook: Boolean(body.isLook || (body.lookItems && body.lookItems.length > 0)),
           description: typeof body.description === 'object' ? body.description : { uz: body.description || '', ru: '', en: '' },
           fabric: typeof body.fabric === 'object' ? body.fabric : { uz: body.fabric || 'Premium sifat', ru: '', en: '' },
           sizes: Array.isArray(body.sizes) ? body.sizes : ['M (48)', 'L (50)', 'XL (52)'],
@@ -266,7 +269,10 @@ export async function handler(event, context) {
           price: body.price !== undefined ? Number(body.price) : existing.price,
           oldPrice: body.oldPrice !== undefined ? (body.oldPrice ? Number(body.oldPrice) : null) : existing.oldPrice,
           image: body.image || existing.image,
-          images: Array.isArray(body.images) ? body.images : [body.image || existing.image]
+          images: Array.isArray(body.images) ? body.images.slice(0, 5) : [body.image || existing.image],
+          imagePosition: body.imagePosition !== undefined ? body.imagePosition : (existing.imagePosition || { x: 50, y: 50 }),
+          lookItems: Array.isArray(body.lookItems) ? body.lookItems : (existing.lookItems || []),
+          isLook: body.isLook !== undefined ? body.isLook : Boolean(existing.isLook || (existing.lookItems && existing.lookItems.length > 0))
         };
 
         items[index] = updated;
@@ -509,10 +515,83 @@ export async function handler(event, context) {
       });
 
       const tgResult = await tgRes.json();
+
+      // 7b. Automatic customer tracking in settings.customers
+      const customerName = (body.name || 'Mijoz').trim();
+      const customerPhone = (body.phone || '').trim();
+      const cleanPhone = customerPhone.replace(/[^\d+]/g, '');
+
+      if (cleanPhone) {
+        try {
+          const settings = await getStoredSettings();
+          let customers = Array.isArray(settings.customers) ? settings.customers : [];
+          const existingIdx = customers.findIndex(c => (c.phone || '').replace(/[^\d+]/g, '') === cleanPhone);
+
+          const orderRecord = {
+            orderId: `ord_${Date.now()}`,
+            date: body.date || new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' }),
+            products: body.productsText || (Array.isArray(body.items) ? body.items.map(i => `${i.name} [${i.size || 'std'}] x${i.quantity || 1}`).join(', ') : (body.products || 'Xarid')),
+            total: Number(body.totalSum) || 0,
+            deliveryType: body.deliveryType || "Kuryer",
+            paymentType: body.paymentType || "Click / Payme",
+            branch: body.branchName || "",
+            notes: body.notes || ""
+          };
+
+          if (existingIdx > -1) {
+            customers[existingIdx].ordersCount = (customers[existingIdx].ordersCount || 1) + 1;
+            customers[existingIdx].totalSpent = (customers[existingIdx].totalSpent || 0) + (Number(body.totalSum) || 0);
+            customers[existingIdx].lastOrderDate = orderRecord.date;
+            if (customerName && customerName !== 'Mijoz') {
+              customers[existingIdx].name = customerName;
+            }
+            customers[existingIdx].orders = [orderRecord, ...(customers[existingIdx].orders || [])];
+          } else {
+            customers.unshift({
+              id: `cust_${Date.now()}`,
+              name: customerName,
+              phone: customerPhone,
+              firstOrderDate: orderRecord.date,
+              lastOrderDate: orderRecord.date,
+              ordersCount: 1,
+              totalSpent: Number(body.totalSum) || 0,
+              notes: body.notes || "",
+              orders: [orderRecord]
+            });
+          }
+
+          settings.customers = customers;
+          await setStoredSettings(settings);
+        } catch (custErr) {
+          console.error('[Netlify Function] Customer auto-save error:', custErr.message);
+        }
+      }
+
       if (tgResult.ok) {
         return { statusCode: 200, headers, body: JSON.stringify({ success: true, messageId: tgResult.result?.message_id }) };
       } else {
         return { statusCode: 502, headers, body: JSON.stringify({ success: false, error: tgResult.description || 'Telegram xatosi' }) };
+      }
+    }
+
+    // 8. Customers Management (/api/customers)
+    if (pathname === '/api/customers' || pathname.startsWith('/api/customers/')) {
+      const settings = await getStoredSettings();
+      if (method === 'GET') {
+        return { statusCode: 200, headers, body: JSON.stringify(settings.customers || []) };
+      }
+      if (method === 'DELETE') {
+        const idFromPath = pathname.replace('/api/customers/', '').replace('/api/customers', '');
+        const idFromQuery = event.queryStringParameters?.id;
+        const targetId = idFromPath || idFromQuery || body?.id;
+
+        if (!targetId) {
+          return { statusCode: 400, headers, body: JSON.stringify({ success: false, error: "Mijoz ID si ko'rsatilmadi" }) };
+        }
+
+        settings.customers = (settings.customers || []).filter(c => c.id !== targetId);
+        await setStoredSettings(settings);
+        return { statusCode: 200, headers, body: JSON.stringify({ success: true, customers: settings.customers }) };
       }
     }
 

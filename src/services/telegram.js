@@ -3,26 +3,62 @@
  * Formats order payloads into high-status Telegram HTML messages and dispatches via API
  */
 
+function formatMoney(num) {
+  if (!num) return '0';
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
 export const formatTelegramOrderMessage = (data) => {
-  const { name, phone, products, deliveryType, paymentType, notes, date } = data;
+  const { name, phone, items, totalSum, products, deliveryType, paymentType, notes, branchName, date } = data;
 
   const cleanPhone = phone ? phone.replace(/[^\d+]/g, '') : '';
   const now = date || new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' });
 
+  let itemsText = '';
+  if (Array.isArray(items) && items.length > 0) {
+    itemsText = items.map((item, idx) => {
+      const prodName = typeof item.name === 'object' ? (item.name.uz || item.name.ru || 'Mahsulot') : (item.name || 'Mahsulot');
+      const codeStr = item.code || item.modelCode ? ` (${item.code || item.modelCode})` : '';
+      const sizeStr = item.selectedSize || item.size ? ` [${item.selectedSize || item.size}]` : '';
+      const qty = Number(item.quantity) || 1;
+      const price = Number(item.price) || 0;
+      const lineTotal = qty * price;
+
+      let line = `${idx + 1}. <b>${escapeHtml(prodName)}</b>${escapeHtml(codeStr)}${escapeHtml(sizeStr)} ${qty} x ${formatMoney(price)}`;
+      if (qty > 1) {
+        line += ` = ${formatMoney(lineTotal)}`;
+      }
+
+      // If it's a bundle / ready look with breakdown items
+      if (Array.isArray(item.lookItems) && item.lookItems.length > 0) {
+        const lookLines = item.lookItems.map(l => `   └ <i>${escapeHtml(l.name)}</i>: ${formatMoney(l.price)} so'm`).join('\n');
+        line += `\n${lookLines}`;
+      }
+
+      return line;
+    }).join('\n');
+  } else if (products) {
+    itemsText = escapeHtml(products);
+  } else {
+    itemsText = "Smart Casual kiyimlar konsultatsiyasi";
+  }
+
+  const calcTotal = Number(totalSum) || (Array.isArray(items) ? items.reduce((sum, i) => sum + (Number(i.price) || 0) * (Number(i.quantity) || 1), 0) : 0);
+  const totalLine = calcTotal > 0 ? `\nUmumiy summa: ${formatMoney(calcTotal)} so'm` : '';
+
+  const branchInfo = branchName || data.branch || (Array.isArray(items) && items[0]?.availableBranches ? items[0].availableBranches.join(', ') : '');
+
   return `
-👑 <b>YANGI BUYURTMA // MERATTO &amp; DE FRANKO</b>
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 👤 <b>Mijoz:</b> ${escapeHtml(name || "Noma'lum xaridor")}
 📞 <b>Telefon:</b> <a href="tel:${cleanPhone}">${cleanPhone || phone}</a>
 ⏰ <b>Vaqt:</b> ${now}
 
 📦 <b>BUYURTMA TARKIBI:</b>
-${escapeHtml(products || 'Smart Casual kiyimlar konsultatsiyasi')}
+${itemsText}${totalLine}
 
-🚚 <b>Yetkazish:</b> ${escapeHtml(deliveryType || "Ko'rsatilmadi")}
-💳 <b>To'lov turi:</b> ${escapeHtml(paymentType || "Ko'rsatilmadi")}
-${notes ? `📝 <b>Izoh / Manzil:</b> <i>${escapeHtml(notes)}</i>` : ''}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚚 <b>Yetkazish:</b> ${escapeHtml(deliveryType || "Kuryer orqali yetkazish")}
+💳 <b>To'lov turi:</b> ${escapeHtml(paymentType || "Click / Payme")}
+${notes ? `📝 <b>Izoh / Manzil:</b> <i>${escapeHtml(notes)}</i>\n` : ''}${branchInfo ? `🏪 <b>Do'kon / Filial:</b> ${escapeHtml(branchInfo)}\n` : ''}━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 <i>🏛 Toshkent Boutique // Meratto &amp; De Franko Web Terminal</i>
 `.trim();
 };

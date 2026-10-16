@@ -53,11 +53,45 @@ export default function OrderForm({ prefillProduct, cart, clearCart, lang, t }) 
 
     setIsSubmitting(true);
 
+    let items = [];
+    if (cart.length > 0) {
+      items = cart.map(item => ({
+        id: item.id,
+        name: typeof item.name === 'object' ? (item.name[lang] || item.name.uz || item.name.ru) : item.name,
+        code: item.code || item.modelCode || '',
+        selectedSize: item.selectedSize || '',
+        quantity: item.quantity || 1,
+        price: Number(item.price) || 0,
+        lookItems: item.lookItems || [],
+        availableBranches: item.availableBranches || []
+      }));
+    } else if (prefillProduct) {
+      items = [{
+        id: prefillProduct.id,
+        name: typeof prefillProduct.name === 'object' ? (prefillProduct.name[lang] || prefillProduct.name.uz || prefillProduct.name.ru) : prefillProduct.name,
+        code: prefillProduct.code || prefillProduct.modelCode || '',
+        selectedSize: prefillProduct.selectedSize || '',
+        quantity: 1,
+        price: Number(prefillProduct.price) || 0,
+        lookItems: prefillProduct.lookItems || [],
+        availableBranches: prefillProduct.availableBranches || []
+      }];
+    }
+
+    const totalSum = items.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1), 0);
+    const chosenBranch = branches.find(b => b.id === selectedBranch)?.name || 'Meratto Qoratosh';
+    const branchName = deliveryType === 'branch'
+      ? chosenBranch
+      : (items[0]?.availableBranches?.length > 0 ? items[0].availableBranches.join(', ') : "Meratto Qoratosh, Meratto Chilonzor, De Franko");
+
     const payload = {
       name: name.trim() || "Mijoz",
       phone: phone.trim(),
+      items,
+      totalSum,
+      branchName,
       products: getCartSummaryText() || "Smart Casual kiyimlar konsultatsiyasi",
-      deliveryType: deliveryType === 'courier' ? "Kuryer orqali yetkazish" : `Do'kondan olib ketish (${branches.find(b => b.id === selectedBranch)?.name || 'Filial'})`,
+      deliveryType: deliveryType === 'courier' ? "Kuryer orqali yetkazish" : `Do'kondan olib ketish (${chosenBranch})`,
       paymentType: paymentType === 'door' ? "Eshik oldida (Naqd/Karta)" : paymentType === 'online' ? "Click / Payme" : "Do'konda to'lash",
       notes: notes.trim(),
       date: new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' })

@@ -98,7 +98,10 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
           <img 
             src={product.image} 
             alt={product.name[lang] || product.name.uz} 
-            className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
+            style={{
+              objectPosition: `${product.imagePosition?.x ?? 50}% ${product.imagePosition?.y ?? 50}%`
+            }}
             loading={index < 8 ? "eager" : "lazy"}
             decoding="async"
           />
@@ -108,14 +111,22 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
           {/* Top WOUFX Technical Badges */}
           <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10 pointer-events-none">
             <span className="font-mono text-[9px] uppercase tracking-[0.16em] px-2.5 py-1 rounded-full bg-[#07080a]/85 border border-white/10 text-[#E5C378] backdrop-blur-md">
-              {product.modelCode || "MERATTO"}
+              {product.modelCode || product.code || "MERATTO"}
             </span>
 
-            {product.badge && (
-              <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white backdrop-blur-md border border-white/10">
-                {product.badge}
-              </span>
-            )}
+            <div className="flex items-center gap-1.5">
+              {(product.isLook || (product.lookItems && product.lookItems.length > 0)) && (
+                <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#E5C378]/25 text-[#E5C378] backdrop-blur-md border border-[#E5C378]/40 font-semibold flex items-center gap-1">
+                  <Sparkles className="w-2.5 h-2.5 text-[#E5C378]" />
+                  <span>LOOK</span>
+                </span>
+              )}
+              {product.badge && (
+                <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 text-white backdrop-blur-md border border-white/10">
+                  {product.badge}
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Quick View Button */}

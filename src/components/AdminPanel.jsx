@@ -3,11 +3,12 @@ import {
   Lock, Unlock, LogOut, Plus, Edit3, Trash2, Upload, Image as ImageIcon, 
   ExternalLink, Check, X, Search, Filter, Sparkles, Save, RefreshCw, 
   AlertCircle, Eye, EyeOff, Layers, Tag, ArrowLeft, Phone, MapPin, 
-  FolderPlus, Settings, ShoppingBag, Hash, Star, MessageSquare, Clock, Building, User, Quote
+  FolderPlus, Settings, ShoppingBag, Hash, Star, MessageSquare, Clock, Building, User, Quote,
+  Users, Sliders, Move, ArrowUp, ArrowDown
 } from 'lucide-react';
 
 export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettingsUpdated }) {
-  // Navigation Tabs State: 'products' | 'categories' | 'branches' | 'testimonials' | 'contacts'
+  // Navigation Tabs State: 'products' | 'categories' | 'branches' | 'testimonials' | 'contacts' | 'customers'
   const [activeTab, setActiveTab] = useState('products');
 
   // Authentication State
@@ -42,6 +43,12 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
   const [testimonialSaving, setTestimonialSaving] = useState(false);
   const [avatarImageLoading, setAvatarImageLoading] = useState(false);
   const avatarFileInputRef = useRef(null);
+
+  // Customers (Mijozlar bazasi / CRM) State
+  const [customers, setCustomers] = useState([]);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [selectedCustomerForHistory, setSelectedCustomerForHistory] = useState(null);
+  const [customersLoading, setCustomersLoading] = useState(false);
 
   // Edit / Add Product Modal State
   const [editingProduct, setEditingProduct] = useState(null);
@@ -78,6 +85,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       setIsAuthenticated(true);
       fetchProducts();
       fetchSettings();
+      fetchCustomers();
     }
   }, []);
 
@@ -105,6 +113,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
         setIsAuthenticated(true);
         fetchProducts();
         fetchSettings();
+        fetchCustomers();
       } else {
         setAuthError(data.error || "Parol noto'g'ri!");
       }
@@ -159,6 +168,38 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       }
     } catch (err) {
       console.error('Fetch settings error:', err);
+    }
+  };
+
+  const fetchCustomers = async () => {
+    setCustomersLoading(true);
+    try {
+      const res = await fetch('/api/customers');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setCustomers(data);
+        }
+      }
+    } catch (err) {
+      console.error('Fetch customers error:', err);
+    } finally {
+      setCustomersLoading(false);
+    }
+  };
+
+  const handleDeleteCustomer = async (id, name) => {
+    if (!window.confirm(`Haqiqatan ham "${name}" mijozini bazadan o'chirmoqchimisiz?`)) return;
+    try {
+      const res = await fetch(`/api/customers/${id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setCustomers(data.customers || []);
+        if (selectedCustomerForHistory?.id === id) setSelectedCustomerForHistory(null);
+        showToast("Mijoz muvaffaqiyatli o'chirildi!");
+      }
+    } catch (err) {
+      alert("Xatolik: " + err.message);
     }
   };
 
@@ -567,6 +608,17 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       ? product.availableBranches
       : allBranchIds;
 
+    const prodImages = Array.isArray(product.images) && product.images.length > 0
+      ? product.images.slice(0, 5)
+      : (product.image ? [product.image] : []);
+
+    const prodPosition = product.imagePosition && typeof product.imagePosition.x === 'number'
+      ? { x: Number(product.imagePosition.x), y: Number(product.imagePosition.y) }
+      : { x: 50, y: 50 };
+
+    const prodLookItems = Array.isArray(product.lookItems) ? product.lookItems : [];
+    const isLook = Boolean(product.isLook || prodLookItems.length > 0);
+
     setEditingProduct({
       ...product,
       code: product.code || product.modelCode || `MRT-${Math.floor(100 + Math.random() * 900)}`,
@@ -581,7 +633,11 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       oldPrice: product.oldPrice || '',
       badge: product.badge || '',
       category: product.category || (categories[0]?.id || 'dvoyka'),
-      image: product.image || ''
+      image: product.image || prodImages[0] || '',
+      images: prodImages,
+      imagePosition: prodPosition,
+      isLook,
+      lookItems: prodLookItems
     });
     setModalError('');
     setShowQuickAddCat(false);
@@ -608,7 +664,11 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       oldPrice: '',
       badge: 'New 2026',
       category: categories[0]?.id || 'dvoyka',
-      image: ''
+      image: '',
+      images: [],
+      imagePosition: { x: 50, y: 50 },
+      isLook: false,
+      lookItems: []
     });
     setModalError('');
     setShowQuickAddCat(false);
@@ -674,7 +734,7 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
     }
   };
 
-  // 7. Image Upload via Base64
+  // 7. Multi-Image & Positioning Handlers
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -698,11 +758,18 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
 
         const data = await res.json();
         if (res.ok && data.success) {
-          setEditingProduct(prev => ({
-            ...prev,
-            image: data.url,
-            images: [data.url, ...(prev.images || [])]
-          }));
+          const newUrl = data.url;
+          setEditingProduct(prev => {
+            const currentImgs = Array.isArray(prev.images) ? [...prev.images] : (prev.image ? [prev.image] : []);
+            if (!currentImgs.includes(newUrl) && currentImgs.length < 5) {
+              currentImgs.push(newUrl);
+            }
+            return {
+              ...prev,
+              image: prev.image || newUrl,
+              images: currentImgs
+            };
+          });
           showToast("Rasm muvaffaqiyatli yuklandi!");
         } else {
           setModalError(data.error || "Rasmni yuklashda xatolik yuz berdi");
@@ -714,6 +781,108 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       setModalError("Faylni o'qishda xatolik: " + err.message);
       setImageUploadLoading(false);
     }
+  };
+
+  const handleAddImageUrl = (url) => {
+    const cleanUrl = (url || '').trim();
+    if (!cleanUrl) return;
+    setEditingProduct(prev => {
+      const currentImgs = Array.isArray(prev.images) ? [...prev.images] : (prev.image ? [prev.image] : []);
+      if (!currentImgs.includes(cleanUrl) && currentImgs.length < 5) {
+        currentImgs.push(cleanUrl);
+      }
+      return {
+        ...prev,
+        image: prev.image || cleanUrl,
+        images: currentImgs
+      };
+    });
+    showToast("Rasm havolasi qo'shildi!");
+  };
+
+  const handleRemoveProductImage = (idxToRemove) => {
+    setEditingProduct(prev => {
+      const updated = (prev.images || []).filter((_, i) => i !== idxToRemove);
+      const newCover = prev.image === prev.images[idxToRemove] ? (updated[0] || '') : prev.image;
+      return {
+        ...prev,
+        images: updated,
+        image: newCover
+      };
+    });
+  };
+
+  const handleSetCoverImage = (imgUrl) => {
+    setEditingProduct(prev => ({
+      ...prev,
+      image: imgUrl
+    }));
+    showToast("Asosiy rasm (muqova) etib belgilandi!");
+  };
+
+  const handleAdjustImagePosition = (deltaX, deltaY) => {
+    setEditingProduct(prev => {
+      const current = prev.imagePosition || { x: 50, y: 50 };
+      const newX = Math.max(0, Math.min(100, Math.round((current.x ?? 50) + deltaX)));
+      const newY = Math.max(0, Math.min(100, Math.round((current.y ?? 50) + deltaY)));
+      return {
+        ...prev,
+        imagePosition: { x: newX, y: newY }
+      };
+    });
+  };
+
+  const handleSetImagePosition = (axis, val) => {
+    setEditingProduct(prev => {
+      const current = prev.imagePosition || { x: 50, y: 50 };
+      return {
+        ...prev,
+        imagePosition: {
+          ...current,
+          [axis]: Number(val)
+        }
+      };
+    });
+  };
+
+  // 7b. Tayyor Look Items Handlers
+  const handleAddLookItem = () => {
+    setEditingProduct(prev => ({
+      ...prev,
+      isLook: true,
+      lookItems: [
+        ...(prev.lookItems || []),
+        { id: `look_${Date.now()}`, name: '', price: 0 }
+      ]
+    }));
+  };
+
+  const handleUpdateLookItem = (index, field, value) => {
+    setEditingProduct(prev => {
+      const items = [...(prev.lookItems || [])];
+      items[index] = {
+        ...items[index],
+        [field]: field === 'price' ? (Number(value) || 0) : value
+      };
+      return { ...prev, lookItems: items };
+    });
+  };
+
+  const handleRemoveLookItem = (index) => {
+    setEditingProduct(prev => {
+      const items = (prev.lookItems || []).filter((_, i) => i !== index);
+      return { ...prev, lookItems: items };
+    });
+  };
+
+  const handleCalculateLookSum = () => {
+    if (!editingProduct.lookItems || editingProduct.lookItems.length === 0) return;
+    const sum = editingProduct.lookItems.reduce((acc, item) => acc + (Number(item.price) || 0), 0);
+    setEditingProduct(prev => ({
+      ...prev,
+      price: sum
+    }));
+    showToast(`Komplekt summasi hisoblandi: ${sum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} so'm`);
   };
 
   // 8. Save Product Changes
@@ -728,14 +897,20 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       return;
     }
 
-    if (!editingProduct.image.trim()) {
-      setModalError("Iltimos, rasm yuklang yoki rasm havolasini kiriting!");
+    const currentImages = Array.isArray(editingProduct.images) && editingProduct.images.length > 0
+      ? editingProduct.images.slice(0, 5)
+      : [editingProduct.image].filter(Boolean);
+
+    if (currentImages.length === 0 && !editingProduct.image.trim()) {
+      setModalError("Iltimos, kamida 1 ta rasm yuklang yoki rasm havolasini kiriting!");
       setModalSaving(false);
       return;
     }
 
     const productCode = (editingProduct.code || `MRT-${Math.floor(100 + Math.random() * 900)}`).trim();
     const allBranchIds = getBranchIds();
+    const coverImage = editingProduct.image || currentImages[0] || '';
+
     const payload = {
       id: editingProduct.id || undefined,
       code: productCode,
@@ -752,8 +927,11 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
       price: Number(editingProduct.price) || 0,
       oldPrice: editingProduct.oldPrice ? Number(editingProduct.oldPrice) : null,
       badge: editingProduct.badge || '',
-      image: editingProduct.image,
-      images: [editingProduct.image],
+      image: coverImage,
+      images: currentImages,
+      imagePosition: editingProduct.imagePosition || { x: 50, y: 50 },
+      isLook: Boolean(editingProduct.isLook || (editingProduct.lookItems && editingProduct.lookItems.length > 0)),
+      lookItems: Array.isArray(editingProduct.lookItems) ? editingProduct.lookItems.filter(i => i.name?.trim()) : [],
       description: {
         uz: editingProduct.descUz,
         ru: editingProduct.descRu || editingProduct.descUz,
@@ -991,6 +1169,18 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
             >
               <Phone className="w-3.5 h-3.5" />
               <span>Aloqa</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('customers')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 shrink-0 ${
+                activeTab === 'customers'
+                  ? 'bg-[#E5C378] text-[#07080a] shadow-sm font-semibold'
+                  : 'text-[#8f96a0] hover:text-white'
+              }`}
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Mijozlar Bazasi ({customers.length})</span>
             </button>
           </div>
 
@@ -1738,6 +1928,270 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
             </div>
           </div>
         )}
+
+        {/* ==========================================================
+            VIEW: CUSTOMERS DATABASE / CRM (Mijozlar Bazasi)
+            ========================================================== */}
+        {activeTab === 'customers' && (
+          <div className="space-y-6">
+            {/* Header & Metrics Summary */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#0e1015] border border-white/10 rounded-2xl p-6">
+              <div>
+                <h2 className="font-display text-lg font-medium text-white flex items-center gap-2">
+                  <Users className="w-5 h-5 text-[#E5C378]" />
+                  <span>Avtomatik Mijozlar Bazasi (CRM)</span>
+                </h2>
+                <p className="text-xs text-[#8f96a0] mt-1">
+                  Saytdan buyurtma bergan mijozlar (ism, telefon, buyurtmalar tarixi) avtomatik saqlanib boradi
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={fetchCustomers}
+                  disabled={customersLoading}
+                  className="py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium text-xs tracking-wide transition-all flex items-center gap-2"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${customersLoading ? 'animate-spin text-[#E5C378]' : ''}`} />
+                  <span>Yangilash</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Metrics 3 Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-[#0e1015] border border-white/10 rounded-2xl p-5 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-[#E5C378]/10 border border-[#E5C378]/30 flex items-center justify-center text-[#E5C378]">
+                  <Users className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-[11px] font-mono text-[#8f96a0] uppercase tracking-wider">Jami Mijozlar</div>
+                  <div className="text-2xl font-mono font-bold text-white mt-0.5">{customers.length} nafar</div>
+                </div>
+              </div>
+
+              <div className="bg-[#0e1015] border border-white/10 rounded-2xl p-5 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                  <ShoppingBag className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-[11px] font-mono text-[#8f96a0] uppercase tracking-wider">Jami Buyurtmalar</div>
+                  <div className="text-2xl font-mono font-bold text-white mt-0.5">
+                    {customers.reduce((acc, c) => acc + (c.ordersCount || 1), 0)} ta
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-[#0e1015] border border-white/10 rounded-2xl p-5 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <Sparkles className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-[11px] font-mono text-[#8f96a0] uppercase tracking-wider">Umumiy Savdo Tushumi</div>
+                  <div className="text-xl sm:text-2xl font-mono font-bold text-[#E5C378] mt-0.5">
+                    {customers.reduce((acc, c) => acc + (Number(c.totalSpent) || 0), 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} so'm
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Search Filter */}
+            <div className="bg-[#0e1015] border border-white/10 rounded-2xl p-4 flex items-center gap-3">
+              <Search className="w-4 h-4 text-[#8f96a0] ml-1" />
+              <input
+                type="text"
+                value={customerSearch}
+                onChange={(e) => setCustomerSearch(e.target.value)}
+                placeholder="Mijoz ismi yoki telefon raqami bo'yicha qidirish..."
+                className="flex-1 bg-transparent border-none text-xs text-white placeholder-[#555a64] focus:outline-none font-sans"
+              />
+              {customerSearch && (
+                <button
+                  onClick={() => setCustomerSearch('')}
+                  className="text-xs text-[#8f96a0] hover:text-white px-2 py-1"
+                >
+                  Tozalash
+                </button>
+              )}
+            </div>
+
+            {/* Customers Table / Cards */}
+            {customers.length === 0 ? (
+              <div className="text-center py-16 bg-[#0e1015] border border-white/10 rounded-2xl p-8">
+                <Users className="w-12 h-12 text-[#555a64] mx-auto mb-3" />
+                <h3 className="text-base font-medium text-white">Hozircha mijozlar mavjud emas</h3>
+                <p className="text-xs text-[#8f96a0] mt-1 max-w-md mx-auto">
+                  Sayt orqali ilk buyurtma berilgan zahoti mijoz ismi va telefoni bu yerga avtomatik qo'shiladi.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-[#0e1015] border border-white/10 rounded-2xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-[#eef0f3]">
+                    <thead className="bg-[#12141a] border-b border-white/10 text-[10px] font-mono uppercase tracking-wider text-[#8f96a0]">
+                      <tr>
+                        <th className="py-3 px-4">#</th>
+                        <th className="py-3 px-4">Mijoz Ismi</th>
+                        <th className="py-3 px-4">Telefon</th>
+                        <th className="py-3 px-4">Buyurtmalar</th>
+                        <th className="py-3 px-4">Jami Summa</th>
+                        <th className="py-3 px-4">Oxirgi Xarid</th>
+                        <th className="py-3 px-4 text-right">Amallar</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5 font-sans">
+                      {customers
+                        .filter(c => {
+                          const q = customerSearch.toLowerCase().trim();
+                          if (!q) return true;
+                          const nameMatch = (c.name || '').toLowerCase().includes(q);
+                          const phoneMatch = (c.phone || '').replace(/[^\d]/g, '').includes(q.replace(/[^\d]/g, ''));
+                          return nameMatch || phoneMatch;
+                        })
+                        .map((cust, idx) => {
+                          const cleanPhone = (cust.phone || '').replace(/[^\d+]/g, '');
+                          return (
+                            <tr key={cust.id || idx} className="hover:bg-white/[0.02] transition-colors">
+                              <td className="py-3.5 px-4 font-mono text-[#8f96a0]">{idx + 1}</td>
+                              <td className="py-3.5 px-4">
+                                <div className="flex items-center gap-2.5">
+                                  <div className="w-8 h-8 rounded-full bg-[#E5C378]/15 border border-[#E5C378]/30 text-[#E5C378] font-bold text-xs flex items-center justify-center shrink-0">
+                                    {(cust.name || 'M').charAt(0).toUpperCase()}
+                                  </div>
+                                  <div>
+                                    <div className="font-medium text-white">{cust.name || 'Noma\'lum mijoz'}</div>
+                                    <div className="text-[10px] text-[#8f96a0] font-mono">ID: {cust.id}</div>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3.5 px-4 font-mono">
+                                <div className="flex items-center gap-2">
+                                  <a
+                                    href={`tel:${cleanPhone}`}
+                                    className="text-white hover:text-[#E5C378] transition-colors flex items-center gap-1"
+                                    title="Qo'ng'iroq qilish"
+                                  >
+                                    <Phone className="w-3.5 h-3.5 text-[#E5C378]" />
+                                    <span>{cust.phone}</span>
+                                  </a>
+                                  {cleanPhone && (
+                                    <a
+                                      href={`https://t.me/${cleanPhone}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-[10px] text-blue-400 hover:underline bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20"
+                                      title="Telegram orqali yozish"
+                                    >
+                                      TG
+                                    </a>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-3.5 px-4 font-mono">
+                                <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-xs">
+                                  {cust.ordersCount || (cust.orders?.length || 1)} ta xarid
+                                </span>
+                              </td>
+                              <td className="py-3.5 px-4 font-mono font-semibold text-[#E5C378]">
+                                {(Number(cust.totalSpent) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} so'm
+                              </td>
+                              <td className="py-3.5 px-4 text-[#8f96a0] text-[11px] font-mono">
+                                {cust.lastOrderDate || cust.firstOrderDate || 'Bugun'}
+                              </td>
+                              <td className="py-3.5 px-4 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    onClick={() => setSelectedCustomerForHistory(cust)}
+                                    className="py-1 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-white text-[11px] transition-all border border-white/10 flex items-center gap-1"
+                                    title="Buyurtmalar tarixi"
+                                  >
+                                    <Clock className="w-3 h-3 text-[#E5C378]" />
+                                    <span>Tarix</span>
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteCustomer(cust.id, cust.name)}
+                                    className="py-1 px-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[11px] transition-all border border-red-500/20"
+                                    title="O'chirish"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Customer Orders History Modal */}
+            {selectedCustomerForHistory && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+                <div className="relative w-full max-w-2xl bg-[#0e1015] border border-white/10 rounded-2xl p-6 shadow-2xl my-8 max-h-[85vh] overflow-y-auto">
+                  <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-5">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#E5C378]/15 border border-[#E5C378]/30 text-[#E5C378] font-bold flex items-center justify-center">
+                        {(selectedCustomerForHistory.name || 'M').charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 className="font-display font-medium text-base text-white">{selectedCustomerForHistory.name}</h3>
+                        <p className="text-xs font-mono text-[#E5C378]">{selectedCustomerForHistory.phone}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setSelectedCustomerForHistory(null)}
+                      className="p-1.5 rounded-lg text-[#8f96a0] hover:text-white hover:bg-white/5"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="text-xs font-mono uppercase tracking-wider text-[#8f96a0]">
+                      Xaridlar tarixi ({selectedCustomerForHistory.orders?.length || 1} ta buyurtma):
+                    </div>
+
+                    {Array.isArray(selectedCustomerForHistory.orders) && selectedCustomerForHistory.orders.length > 0 ? (
+                      <div className="space-y-3">
+                        {selectedCustomerForHistory.orders.map((ord, oIdx) => (
+                          <div key={ord.orderId || oIdx} className="p-4 rounded-xl bg-[#16181f] border border-white/5 space-y-2">
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="font-mono text-[11px] text-[#E5C378] font-medium">#{ord.orderId || `Buyurtma-${oIdx + 1}`}</span>
+                              <span className="font-mono text-[10px] text-[#8f96a0]">{ord.date}</span>
+                            </div>
+                            <div className="text-sm text-white font-medium">
+                              {ord.products || 'Mahsulotlar'}
+                            </div>
+                            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5 text-xs">
+                              <div className="text-[11px] text-[#8f96a0] font-mono">
+                                <span>Yetkazish: {ord.deliveryType || 'Kuryer'}</span>
+                                {ord.branch && <span className="ml-2">({ord.branch})</span>}
+                              </div>
+                              <div className="font-mono font-bold text-[#E5C378]">
+                                {(Number(ord.total) || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} so'm
+                              </div>
+                            </div>
+                            {ord.notes && (
+                              <div className="text-[11px] text-[#8f96a0] italic bg-white/[0.02] p-2 rounded border border-white/5">
+                                Izoh: {ord.notes}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-xl bg-[#16181f] border border-white/5 text-xs text-[#8f96a0]">
+                        Buyurtma tafsilotlari mavjud emas
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       {/* ==========================================================
@@ -1773,35 +2227,63 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
 
             <form onSubmit={handleSaveProduct} className="space-y-6">
               
-              {/* SECTION 1: IMAGE UPLOADER */}
-              <div className="bg-[#16181f] border border-white/5 rounded-2xl p-4 sm:p-5">
-                <label className="block text-xs font-mono uppercase tracking-wider text-[#E5C378] mb-3">
-                  📸 Tovar Rasmi
-                </label>
+              {/* SECTION 1: PRODUCT IMAGES (UP TO 5) & FRAMING / POSITIONING */}
+              <div className="bg-[#16181f] border border-white/5 rounded-2xl p-4 sm:p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-mono uppercase tracking-wider text-[#E5C378] font-medium flex items-center gap-1.5">
+                    <ImageIcon className="w-4 h-4 text-[#E5C378]" />
+                    <span>📸 Mahsulot Rasmlari ({(editingProduct.images || []).length}/5 ta)</span>
+                  </label>
+                  <span className="text-[11px] text-[#8f96a0] font-mono">5 tagacha rasm</span>
+                </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-5">
-                  <div className="relative w-36 h-36 rounded-xl bg-[#0e1015] border border-white/10 overflow-hidden flex-shrink-0 flex items-center justify-center">
-                    {editingProduct.image ? (
-                      <img 
-                        src={editingProduct.image} 
-                        alt="Preview" 
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="text-center p-2 text-[#555a64]">
-                        <ImageIcon className="w-8 h-8 mx-auto mb-1" />
-                        <span className="text-[10px] block">Rasm yo'q</span>
+                {/* Thumbnails list */}
+                <div className="flex flex-wrap items-center gap-2.5">
+                  {(editingProduct.images || []).map((img, idx) => {
+                    const isCover = editingProduct.image === img;
+                    return (
+                      <div 
+                        key={idx} 
+                        className={`relative w-20 h-24 rounded-xl overflow-hidden border-2 transition-all group ${
+                          isCover ? 'border-[#E5C378] ring-2 ring-[#E5C378]/30 shadow-lg' : 'border-white/10 hover:border-white/30'
+                        }`}
+                      >
+                        <img 
+                          src={img} 
+                          alt={`Rasm ${idx + 1}`} 
+                          onClick={() => handleSetCoverImage(img)}
+                          className="w-full h-full object-cover cursor-pointer"
+                          style={{
+                            objectPosition: `${editingProduct.imagePosition?.x ?? 50}% ${editingProduct.imagePosition?.y ?? 50}%`
+                          }}
+                        />
+                        {isCover && (
+                          <div className="absolute top-1 left-1 px-1 py-0.5 rounded bg-[#E5C378] text-[#07080a] font-mono text-[8px] font-bold uppercase tracking-wider">
+                            Asosiy
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveProductImage(idx);
+                          }}
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500/80 hover:bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          title="Rasmni o'chirish"
+                        >
+                          <Trash2 className="w-2.5 h-2.5" />
+                        </button>
+                        <div 
+                          onClick={() => handleSetCoverImage(img)}
+                          className="absolute bottom-0 inset-x-0 bg-black/75 text-[9px] font-mono text-center py-0.5 text-white/80 cursor-pointer hover:text-[#E5C378]"
+                        >
+                          #{idx + 1}
+                        </div>
                       </div>
-                    )}
+                    );
+                  })}
 
-                    {imageUploadLoading && (
-                      <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-                        <RefreshCw className="w-6 h-6 animate-spin text-[#E5C378]" />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex-1 w-full space-y-3">
+                  {(editingProduct.images || []).length < 5 && (
                     <div>
                       <input
                         type="file"
@@ -1814,27 +2296,170 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         disabled={imageUploadLoading}
-                        className="w-full py-2.5 px-4 rounded-xl bg-[#E5C378]/10 border border-[#E5C378]/30 hover:bg-[#E5C378]/20 text-[#E5C378] text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+                        className="w-20 h-24 rounded-xl border border-dashed border-[#E5C378]/40 hover:border-[#E5C378] bg-[#E5C378]/5 hover:bg-[#E5C378]/10 text-[#E5C378] flex flex-col items-center justify-center gap-1.5 transition-all"
+                        title="Rasm yuklash"
                       >
-                        <Upload className="w-4 h-4" />
-                        <span>Kompyuterdan Rasm Yuklash</span>
+                        {imageUploadLoading ? (
+                          <RefreshCw className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <>
+                            <Upload className="w-5 h-5" />
+                            <span className="text-[10px] font-mono">+ Qo'shish</span>
+                          </>
+                        )}
                       </button>
                     </div>
+                  )}
+                </div>
 
-                    <div className="relative">
-                      <span className="text-[10px] text-[#8f96a0] block mb-1">
-                        Yoki to'g'ridan-to'g'ri rasm havolasini (URL) kiriting:
+                {/* Add by URL input */}
+                {(editingProduct.images || []).length < 5 && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <input
+                      type="text"
+                      id="quick-image-url-input"
+                      placeholder="Yoki rasm havolasini (URL) kiriting: /images/products/... yoki https://..."
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddImageUrl(e.target.value);
+                          e.target.value = '';
+                        }
+                      }}
+                      className="flex-1 bg-[#0e1015] border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-[#555a64] focus:outline-none focus:border-[#E5C378]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const inp = document.getElementById('quick-image-url-input');
+                        if (inp && inp.value) {
+                          handleAddImageUrl(inp.value);
+                          inp.value = '';
+                        }
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-mono font-medium shrink-0"
+                    >
+                      + URL Qo'shish
+                    </button>
+                  </div>
+                )}
+
+                {/* Interactive Framing / Positioning (Surish) */}
+                {editingProduct.image && (
+                  <div className="pt-3 border-t border-white/5 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-mono uppercase tracking-wider text-[#E5C378] font-medium flex items-center gap-1.5">
+                        <Move className="w-3.5 h-3.5 text-[#E5C378]" />
+                        <span>Saytda ko'rinish joylashuvi (Surish / Framing)</span>
+                      </label>
+                      <span className="text-[10px] font-mono text-[#8f96a0]">
+                        X: {editingProduct.imagePosition?.x ?? 50}% | Y: {editingProduct.imagePosition?.y ?? 50}%
                       </span>
-                      <input
-                        type="text"
-                        value={editingProduct.image}
-                        onChange={(e) => setEditingProduct({ ...editingProduct, image: e.target.value })}
-                        placeholder="/images/products/suit.jpg yoki https://..."
-                        className="w-full bg-[#0e1015] border border-white/10 rounded-xl px-3 py-2 text-xs text-white placeholder-[#555a64] focus:outline-none focus:border-[#E5C378]"
-                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center bg-[#0e1015] p-3.5 rounded-xl border border-white/10">
+                      {/* Visual Preview Box (3:4 aspect ratio as site card) */}
+                      <div className="flex flex-col items-center">
+                        <div className="relative w-32 aspect-[3/4] rounded-xl overflow-hidden border border-[#E5C378]/40 bg-black/60 shadow-xl">
+                          <img
+                            src={editingProduct.image}
+                            alt="Crop Preview"
+                            className="w-full h-full object-cover transition-all duration-150"
+                            style={{
+                              objectPosition: `${editingProduct.imagePosition?.x ?? 50}% ${editingProduct.imagePosition?.y ?? 50}%`
+                            }}
+                          />
+                          <div className="absolute inset-0 border border-white/10 pointer-events-none" />
+                          <div className="absolute bottom-1 right-1 bg-black/80 px-1.5 py-0.5 rounded text-[8px] font-mono text-[#E5C378]">
+                            Saytdagi kadr
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Directional Nudges & Sliders */}
+                      <div className="space-y-3">
+                        <div className="text-[11px] text-[#8f96a0]">
+                          Rasmni o'ng-chap, yuqori-pastga surish uchun tugmalar yoki slayderlardan foydalaning:
+                        </div>
+
+                        {/* 4 Nudge Direction Buttons */}
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleAdjustImagePosition(-5, 0)}
+                            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs hover:border-[#E5C378]/40"
+                            title="Chapga surish"
+                          >
+                            ⬅️ Chap
+                          </button>
+                          <div className="flex flex-col gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleAdjustImagePosition(0, -5)}
+                              className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs hover:border-[#E5C378]/40"
+                              title="Tepaga surish"
+                            >
+                              ⬆️ Tepaga
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleAdjustImagePosition(0, 5)}
+                              className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs hover:border-[#E5C378]/40"
+                              title="Pastga surish"
+                            >
+                              ⬇️ Pastga
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleAdjustImagePosition(5, 0)}
+                            className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs hover:border-[#E5C378]/40"
+                            title="O'ngga surish"
+                          >
+                            ➡️ O'ng
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingProduct(prev => ({ ...prev, imagePosition: { x: 50, y: 50 } }))}
+                            className="px-2.5 py-2 rounded-lg bg-[#E5C378]/10 hover:bg-[#E5C378]/20 border border-[#E5C378]/30 text-[#E5C378] text-xs font-mono font-medium"
+                            title="Markazlashtirish"
+                          >
+                            🎯 50/50
+                          </button>
+                        </div>
+
+                        {/* Sliders */}
+                        <div className="space-y-1.5 text-xs font-mono">
+                          <div className="flex items-center justify-between text-[10px] text-[#8f96a0]">
+                            <span>Gorizontal (Chap ↔ O'ng):</span>
+                            <span>{editingProduct.imagePosition?.x ?? 50}%</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={editingProduct.imagePosition?.x ?? 50}
+                            onChange={(e) => handleSetImagePosition('x', e.target.value)}
+                            className="w-full accent-[#E5C378] cursor-pointer"
+                          />
+
+                          <div className="flex items-center justify-between text-[10px] text-[#8f96a0] pt-1">
+                            <span>Vertikal (Yuqori ↔ Past):</span>
+                            <span>{editingProduct.imagePosition?.y ?? 50}%</span>
+                          </div>
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={editingProduct.imagePosition?.y ?? 50}
+                            onChange={(e) => handleSetImagePosition('y', e.target.value)}
+                            className="w-full accent-[#E5C378] cursor-pointer"
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* SECTION 2: PRODUCT TEXTS & CAPTIONS */}
@@ -2007,6 +2632,109 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                       )}
                     </div>
                   </div>
+                </div>
+
+                {/* Tayyor Look (Komplekt) Section */}
+                <div className="p-4 rounded-xl bg-[#16181f] border border-white/10 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(editingProduct.isLook)}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setEditingProduct(prev => ({
+                            ...prev,
+                            isLook: checked,
+                            lookItems: checked && (!prev.lookItems || prev.lookItems.length === 0)
+                              ? [
+                                  { id: `look_1`, name: 'Dvoyka', price: 750000 },
+                                  { id: `look_2`, name: 'Baza futbolka', price: 250000 },
+                                  { id: `look_3`, name: 'Krasovka', price: 635000 }
+                                ]
+                              : prev.lookItems
+                          }));
+                        }}
+                        className="w-4 h-4 rounded accent-[#E5C378] cursor-pointer"
+                      />
+                      <span className="text-xs font-mono uppercase tracking-wider text-[#E5C378] font-medium flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-[#E5C378]" />
+                        <span>✨ Tayyor Look (Komplekt qismlari va alohida narxlari)</span>
+                      </span>
+                    </label>
+
+                    {editingProduct.isLook && (
+                      <button
+                        type="button"
+                        onClick={handleAddLookItem}
+                        className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-[#E5C378]/15 text-[#E5C378] hover:bg-[#E5C378]/25 border border-[#E5C378]/30 transition-all font-medium flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        <span>+ Qism qo'shish</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {editingProduct.isLook && (
+                    <div className="space-y-2.5 pt-1 animate-fade-in">
+                      <p className="text-[11px] text-[#8f96a0]">
+                        Look tarkibidagi har bir tovar nomi va uning narxini alohida yozing (Masalan: Dvoyka 750 000, Baza futbolka 250 000, Krasovka 635 000):
+                      </p>
+
+                      <div className="space-y-2">
+                        {(editingProduct.lookItems || []).map((item, lIdx) => (
+                          <div key={item.id || lIdx} className="flex items-center gap-2 bg-[#0e1015] p-2 rounded-xl border border-white/5">
+                            <span className="text-xs font-mono text-[#E5C378] w-5 text-center font-bold">
+                              {lIdx + 1}.
+                            </span>
+                            <input
+                              type="text"
+                              value={item.name}
+                              onChange={(e) => handleUpdateLookItem(lIdx, 'name', e.target.value)}
+                              placeholder="Tovar nomi (Masalan: Dvoyka)..."
+                              className="flex-1 bg-[#16181f] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-[#555] focus:outline-none focus:border-[#E5C378]"
+                            />
+                            <div className="relative w-36">
+                              <input
+                                type="number"
+                                value={item.price}
+                                onChange={(e) => handleUpdateLookItem(lIdx, 'price', e.target.value)}
+                                placeholder="Narxi..."
+                                className="w-full bg-[#16181f] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-[#555] font-mono focus:outline-none focus:border-[#E5C378] pr-8"
+                              />
+                              <span className="absolute right-2 top-1.5 text-[10px] text-[#8f96a0] font-mono pointer-events-none">so'm</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveLookItem(lIdx)}
+                              className="p-1.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
+                              title="O'chirish"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Look Calculator summary */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-white/5">
+                        <div className="text-xs font-mono text-white">
+                          <span className="text-[#8f96a0]">Komplekt jami summasi: </span>
+                          <span className="font-bold text-[#E5C378]">
+                            {(editingProduct.lookItems || []).reduce((acc, i) => acc + (Number(i.price) || 0), 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} so'm
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleCalculateLookSum}
+                          className="px-3 py-1.5 rounded-lg bg-[#E5C378] text-[#07080a] font-semibold text-xs hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shadow"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          <span>Ushbu summani tovar narxiga o'tkazish</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Grid: Badge & Sizes */}
