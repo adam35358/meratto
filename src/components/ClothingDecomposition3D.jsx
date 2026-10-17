@@ -159,7 +159,7 @@ export default function ClothingDecomposition3D({ lang = 'uz', t, onSelectLook }
   };
 
   return (
-    <section id="decomposition-3d" data-reveal="scale" className="scene-exit py-20 sm:py-28 relative overflow-hidden bg-[#07080a] border-t border-b border-white/[0.08]">
+    <section id="decomposition-3d" data-reveal="scale" className="scene-exit py-20 sm:py-28 relative overflow-hidden bg-transparent border-t border-b border-white/[0.08]">
       
       {/* 3D Depth Spatial Grid Background */}
       <div className="absolute inset-0 pointer-events-none opacity-20">

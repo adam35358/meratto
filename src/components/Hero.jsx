@@ -26,7 +26,7 @@ export default function Hero({ t, heroData = {} }) {
   }, []);
 
   return (
-    <section id="about" className="relative min-h-[92vh] flex items-center pt-36 sm:pt-40 pb-16 overflow-hidden bg-[#07080a] bg-tech-grid">
+    <section id="about" className="relative min-h-[92vh] flex items-center pt-36 sm:pt-40 pb-16 overflow-hidden bg-transparent">
       
       {/* WOUFX Ambient Lighting Elements */}
       <div className="absolute inset-0 pointer-events-none">
@@ -38,7 +38,7 @@ export default function Hero({ t, heroData = {} }) {
           className="absolute top-1/4 -left-20 w-80 h-80 bg-white/[0.02] rounded-full blur-[120px] will-change-transform transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
           style={{ transform: `translate3d(${mouseOffset.x * -0.3}px, ${mouseOffset.y * -0.3}px, 0)` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#07080a]/60 to-[#07080a]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#07080a]/40" />
       </div>
 
       <div className="scene-exit relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">

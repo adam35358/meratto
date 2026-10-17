@@ -570,9 +570,9 @@ export default function WorldCanvas3D() {
 
           for (let i = 0; i < p.pts.length; i++) {
             const pt = p.pts[i];
-            let x = pt[0] + xExplode * decompExplosion;
-            let y = pt[1] + yExplode * decompExplosion;
-            let z = zBase + pt[2] + zExplode * decompExplosion;
+            let x = (pt[0] * 1.55) + xExplode * decompExplosion;
+            let y = (pt[1] * 1.55) + yExplode * decompExplosion;
+            let z = zBase + (pt[2] * 1.55) + zExplode * decompExplosion;
 
             // Apply 3D rotation
             [x, y, z] = rotateX(x, y, z, rotX);
@@ -613,7 +613,9 @@ export default function WorldCanvas3D() {
 
           if (p.stroke) {
             ctx.strokeStyle = p.stroke;
-            ctx.lineWidth = p.width || 1;
+            ctx.lineWidth = (p.width || 1) * 1.35;
+            ctx.shadowColor = p.stroke;
+            ctx.shadowBlur = 8;
             if (p.dashed && ctx.setLineDash) {
               ctx.setLineDash(p.dashed);
             }
@@ -627,9 +629,9 @@ export default function WorldCanvas3D() {
       // Helper for floating horn buttons
       const renderButtons = (buttons, zBase, xExplode, yExplode, zExplode) => {
         buttons.forEach(btn => {
-          let x = btn.x + xExplode * decompExplosion;
-          let y = btn.y + yExplode * decompExplosion;
-          let z = zBase + btn.z + zExplode * decompExplosion;
+          let x = (btn.x * 1.55) + xExplode * decompExplosion;
+          let y = (btn.y * 1.55) + yExplode * decompExplosion;
+          let z = zBase + (btn.z * 1.55) + zExplode * decompExplosion;
 
           [x, y, z] = rotateX(x, y, z, rotX);
           [x, y, z] = rotateY(x, y, z, rotY);
@@ -644,7 +646,7 @@ export default function WorldCanvas3D() {
             ctx.lineWidth = 1.2;
 
             // Outer button rim
-            const r = btn.r * proj.scale;
+            const r = btn.r * 1.55 * proj.scale;
             ctx.beginPath();
             ctx.arc(proj.x, proj.y, r, 0, Math.PI * 2);
             ctx.fill();
@@ -714,9 +716,9 @@ export default function WorldCanvas3D() {
       // 4. RENDER 3D SARTORIAL HUD LABELS & MEASURING CROSSHAIRS
       // =======================================================================
       sartorialHudMarkers.forEach((marker) => {
-        let x = marker.pos[0] * (1 + decompExplosion * 0.35);
-        let y = marker.pos[1];
-        let z = zStation1 + marker.pos[2];
+        let x = (marker.pos[0] * 1.55) * (1 + decompExplosion * 0.35);
+        let y = marker.pos[1] * 1.55;
+        let z = zStation1 + marker.pos[2] * 1.55;
 
         [x, y, z] = rotateX(x, y, z, rotX);
         [x, y, z] = rotateY(x, y, z, rotY);
