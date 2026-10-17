@@ -92,7 +92,7 @@ export default function Hero({ t, heroData = {} }) {
             <div className="pt-8 border-t border-white/[0.08] grid grid-cols-3 gap-4 text-left">
               <div className="woufx-panel rounded-2xl p-4">
                 <div className="font-display text-2xl sm:text-3xl font-light text-white tracking-tight">
-                  3 <span className="font-mono text-xs text-[#E5C378] font-normal">NODES</span>
+                  3 <span className="font-mono text-xs text-[#E5C378] font-normal">FILIAL</span>
                 </div>
                 <div className="font-mono text-[10px] text-[#8f96a0] uppercase tracking-wider mt-1">
                   {t.hero.statBranchesSub || "Toshkent filiallari"}

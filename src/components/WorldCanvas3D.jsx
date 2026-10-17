@@ -98,11 +98,11 @@ export default function WorldCanvas3D({ scrollProgress = 0 }) {
       { radius: 330, tiltX: 0.4, tiltY: -0.5, speed: 0.25, color: 'rgba(229, 195, 120, 0.3)', dash: [8, 14] }
     ];
 
-    // 4. Tashkent 3-Boutique Nodes
+    // 4. Tashkent 3-Boutique Nodes (Qoratosh Meratto, Chilonzor Meratto, De Franko)
     const boutiqueNodes = [
-      { name: "Qoratosh Node", phi: 0.65, theta: 0.85, color: '#E5C378' },
-      { name: "Chilonzor-1 Node", phi: 0.95, theta: 1.15, color: '#4fc79a' },
-      { name: "Chilonzor-3 Node", phi: 1.25, theta: 0.65, color: '#4fc79a' }
+      { name: "Qoratosh Meratto", phi: 0.65, theta: 0.85, color: '#E5C378' },
+      { name: "Chilonzor Meratto", phi: 0.95, theta: 1.15, color: '#4fc79a' },
+      { name: "De Franko", phi: 1.25, theta: 0.65, color: '#E5C378' }
     ];
 
     // 5. 3D Infinite Tunnel Star Particles (900 particles)
@@ -472,9 +472,13 @@ export default function WorldCanvas3D({ scrollProgress = 0 }) {
 
           // Node Label in Branches Section
           if (scrollNorm >= 0.65) {
-            ctx.fillStyle = '#eef0f3';
-            ctx.font = '10px "IBM Plex Mono", monospace';
-            ctx.fillText(node.name, x + 12, y + 4);
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+            ctx.shadowBlur = 6;
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '600 11px "IBM Plex Mono", monospace';
+            ctx.fillText(node.name, x + 14, y + 4);
+            ctx.restore();
           }
           ctx.globalAlpha = 1;
         }

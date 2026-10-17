@@ -4,7 +4,7 @@ import {
   ExternalLink, Check, X, Search, Filter, Sparkles, Save, RefreshCw, 
   AlertCircle, Eye, EyeOff, Layers, Tag, ArrowLeft, Phone, MapPin, 
   FolderPlus, Settings, ShoppingBag, Hash, Star, MessageSquare, Clock, Building, User, Quote,
-  Users, Sliders, Move, ArrowUp, ArrowDown, Palette, Compass
+  Users, Sliders, Move, ArrowUp, ArrowDown, Palette, Compass, Copy, Zap
 } from 'lucide-react';
 
 export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettingsUpdated }) {
@@ -1149,7 +1149,114 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
     }
   };
 
-  // 9. Lookbook / Obrazlar Handlers
+  // 9. Lookbook / Obrazlar Handlers & Tezkor Namunalar
+  const QUICK_LOOK_TEMPLATES = [
+    {
+      id: "sample_office",
+      badge: "👔 Ofis & Biznes",
+      tag: "OFIS & BIZNES UCHRASHUV",
+      title: "To'q Ko'k Dvoyka Kostyum + Oq Oxford Ko'ylak + Tabiiy Charm Loferlar",
+      desc: "Muzokaralar, biznes uchrashuvlar va ofis uchun ideal darajadagi salobatli, jiddiy va ortiqcha dabdabasiz premium to'plam.",
+      price: 1450000,
+      image: "/images/products/real_dvoyka_sportchic_navy.jpg",
+      imagePosition: { x: 50, y: 30 }
+    },
+    {
+      id: "sample_evening",
+      badge: "🍸 Kechki Restoran",
+      tag: "KECHKI BAZM & RESTORAN",
+      title: "Shokolad Melanj Dvoyka + Qora Sviter + Bordo Ipak Ro'molcha",
+      desc: "Kechki uchrashuv va nufuzli restorandagi kechki ovqat uchun hashamatli, chuqur va iliq ranglar uyg'unligi.",
+      price: 1650000,
+      image: "/images/products/real_jacket_cucinelli_wool.jpg",
+      imagePosition: { x: 50, y: 40 }
+    },
+    {
+      id: "sample_weekend",
+      badge: "✈️ Dam Olish & Sayr",
+      tag: "DAM OLISH & SAYOHAT",
+      title: "Aviator Mo'ynali Kurtka + Dark Indigo Djinsi + Oq Tagcharmli Krossovka",
+      desc: "Avtomobilda harakatlanish, oilaviy dam olish va shahar bo'ylab sayr uchun maksimal erkinlik va zamonaviy italyancha did.",
+      price: 1850000,
+      image: "/images/products/real_coat_cashmere_black.jpg",
+      imagePosition: { x: 50, y: 35 }
+    },
+    {
+      id: "sample_smart_casual",
+      badge: "☕ Smart Casual",
+      tag: "SMART CASUAL & KUNDALIK",
+      title: "Zangori Slim-Fit Pidjak + Oq Baza Futbolka + Qat'iy Chinos Shim",
+      desc: "Kundalik erkinlik va nafis italyancha did uyg'unligi — qahvaxona, norasmiy uchrashuvlar va kundalik uslub uchun.",
+      price: 1250000,
+      image: "/images/products/real_casual_bomber_khaki.jpg",
+      imagePosition: { x: 50, y: 35 }
+    },
+    {
+      id: "sample_formal",
+      badge: "👑 Tantanali To'y",
+      tag: "TANTANALI & TO'Y MAROSIMI",
+      title: "Premium Velvet Tuxedo + Ipak Kapalak Galstuk + Klassik Lofer",
+      desc: "To'ylar, nufuzli kechki marosimlar va tantanalar uchun o'zgacha hashamat va salobat baxsh etuvchi to'plam.",
+      price: 2100000,
+      image: "/images/products/real_suit_classic_navy.jpg",
+      imagePosition: { x: 50, y: 38 }
+    }
+  ];
+
+  const handleCloneLook = (look) => {
+    setEditingLook({
+      ...look,
+      id: '',
+      title: `${look.title} (Nusxa)`,
+      imagePosition: look.imagePosition ? { ...look.imagePosition } : { x: 50, y: 50 }
+    });
+    setIsLookModalOpen(true);
+  };
+
+  const handleApplyLookTemplate = (template) => {
+    setEditingLook(prev => ({
+      ...prev,
+      tag: template.tag,
+      title: template.title,
+      desc: template.desc,
+      price: template.price,
+      image: template.image || prev?.image || '',
+      imagePosition: template.imagePosition || prev?.imagePosition || { x: 50, y: 50 }
+    }));
+    showToast(`"${template.badge}" namunasi qo'llandi!`);
+  };
+
+  const handleGenerateSampleLooks = async () => {
+    if (!window.confirm("Barcha 5 ta professional tayyor namuna obrazlarni yuklab saqlamoqchimisiz?")) return;
+    setLookSaving(true);
+    try {
+      const existingIds = new Set(looks.map(l => l.id));
+      const missingSamples = QUICK_LOOK_TEMPLATES.filter(s => !existingIds.has(s.id));
+      const combined = [
+        ...looks, 
+        ...(missingSamples.length > 0 ? missingSamples : QUICK_LOOK_TEMPLATES.map((s, idx) => ({ ...s, id: `sample_${Date.now()}_${idx}` })))
+      ];
+
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ looks: combined })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setLooks(combined);
+        showToast("5 ta tezkor namuna obraz muvaffaqiyatli yaratildi va saqlandi!");
+        fetchSettings();
+      } else {
+        alert(data.error || "Namunalarni saqlashda xatolik");
+      }
+    } catch (err) {
+      alert("Xatolik: " + err.message);
+    } finally {
+      setLookSaving(false);
+    }
+  };
+
   const handleOpenCreateLook = () => {
     setEditingLook({
       id: '',
@@ -2669,7 +2776,16 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                 </p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleGenerateSampleLooks}
+                  disabled={lookSaving}
+                  className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#E5C378]/20 to-[#c29e50]/20 hover:from-[#E5C378]/30 hover:to-[#c29e50]/30 border border-[#E5C378]/40 text-[#E5C378] font-semibold text-xs tracking-wide transition-all flex items-center gap-2 shadow-lg shrink-0 active:scale-95"
+                >
+                  <Zap className="w-4 h-4 text-[#E5C378]" />
+                  <span>⚡ 5 ta Namunani Yaratish</span>
+                </button>
                 <button
                   type="button"
                   onClick={handleOpenCreateLook}
@@ -2678,6 +2794,34 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                   <Plus className="w-4 h-4" />
                   <span>Yangi Obraz Qo'shish</span>
                 </button>
+              </div>
+            </div>
+
+            {/* Quick Template Quick-Pills Bar */}
+            <div className="bg-[#12141a] border border-white/10 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-[#E5C378] shrink-0" />
+                <span className="text-xs font-semibold text-white">Tezkor namunadan yangi obraz yaratish:</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {QUICK_LOOK_TEMPLATES.map((tmpl) => (
+                  <button
+                    key={tmpl.id}
+                    type="button"
+                    onClick={() => {
+                      setEditingLook({
+                        id: '',
+                        ...tmpl
+                      });
+                      setIsLookModalOpen(true);
+                      showToast(`"${tmpl.badge}" shabloni yuklandi!`);
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-[#E5C378]/15 border border-white/10 hover:border-[#E5C378]/40 text-xs text-white hover:text-[#E5C378] transition-all flex items-center gap-1.5 active:scale-95"
+                    title={tmpl.title}
+                  >
+                    <span>{tmpl.badge}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -2736,6 +2880,15 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                   <div className="p-5 pt-0 border-t border-white/5 mt-3 flex items-center justify-end gap-2">
                     <button
                       type="button"
+                      onClick={() => handleCloneLook(look)}
+                      className="px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-[#E5C378]/15 text-[#8f96a0] hover:text-[#E5C378] text-xs font-medium flex items-center gap-1.5 transition-all"
+                      title="Ushbu obrazdan nusxa olish va tez yangi obraz yaratish"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-[#E5C378]" />
+                      <span>Nusxa olish</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleOpenEditLook(look)}
                       className="px-3 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-medium flex items-center gap-1.5 transition-all"
                     >
@@ -2756,10 +2909,31 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
             </div>
 
             {looks.length === 0 && (
-              <div className="p-12 text-center rounded-2xl bg-[#0e1015] border border-white/10 space-y-3">
-                <Compass className="w-10 h-10 text-white/20 mx-auto" />
-                <h4 className="text-white text-base font-medium">Hozircha obrazlar mavjud emas</h4>
-                <p className="text-xs text-[#8f96a0]">Yangi obraz qo'shish uchun yuqoridagi tugmani bosing</p>
+              <div className="p-12 text-center rounded-2xl bg-[#0e1015] border border-white/10 space-y-4">
+                <Compass className="w-12 h-12 text-[#E5C378]/40 mx-auto" />
+                <h4 className="text-white text-lg font-medium">Hozircha obrazlar mavjud emas</h4>
+                <p className="text-xs text-[#8f96a0] max-w-md mx-auto">
+                  1 ta tugma orqali 5 ta professional tayyor namunaviy obrazlarni yuklashingiz yoki noldan yangi obraz qo'shishingiz mumkin.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleGenerateSampleLooks}
+                    disabled={lookSaving}
+                    className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-[#E5C378] to-[#c29e50] text-[#07080a] font-semibold text-xs tracking-wide shadow-lg hover:brightness-110 active:scale-95 transition-all flex items-center gap-2"
+                  >
+                    <Zap className="w-4 h-4" />
+                    <span>⚡ 5 ta Tayyor Namunani Yaratish</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleOpenCreateLook}
+                    className="py-2.5 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-medium transition-all flex items-center gap-1.5"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>Noldan Yangi Obraz Qo'shish</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -4298,6 +4472,30 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
 
             {/* Modal Form */}
             <form onSubmit={handleSaveLook} className="space-y-5">
+              {/* Tezkor Namunaviy Shablonlar Bar */}
+              <div className="p-3.5 bg-gradient-to-r from-[#E5C378]/15 via-white/[0.03] to-transparent border border-[#E5C378]/25 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-white flex items-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 text-[#E5C378]" />
+                    <span>Tezkor Namuna Shablonlari (Bitta bosishda to'ldirish):</span>
+                  </span>
+                  <span className="text-[10px] text-[#8f96a0] font-mono">1 bosishda to'ldiradi</span>
+                </div>
+                <div className="flex flex-wrap gap-2 pt-0.5">
+                  {QUICK_LOOK_TEMPLATES.map((tmpl) => (
+                    <button
+                      key={tmpl.id}
+                      type="button"
+                      onClick={() => handleApplyLookTemplate(tmpl)}
+                      className="px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-[#E5C378]/20 border border-white/10 hover:border-[#E5C378]/40 text-xs text-white hover:text-[#E5C378] font-medium transition-all active:scale-95 flex items-center gap-1"
+                      title={tmpl.title}
+                    >
+                      <span>{tmpl.badge}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Ssenariy / Kategoriya Tegi */}
               <div>
                 <label className="block text-xs font-medium text-[#8f96a0] mb-1.5">
@@ -4312,8 +4510,15 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
                   className="w-full bg-[#16181f] border border-white/10 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-[#E5C378]"
                 />
                 <div className="flex flex-wrap gap-1.5 mt-2">
-                  <span className="text-[11px] text-[#8f96a0] self-center mr-1">Tezkor namunalar:</span>
-                  {["OFIS & BIZNES UCHRASHUV", "DAM OLISH & SAYR (CASUAL)", "TANTANALI & TO'Y MAROSIMI", "SMART CASUAL"].map(preset => (
+                  <span className="text-[11px] text-[#8f96a0] self-center mr-1">Tezkor ssenariy namunalari:</span>
+                  {[
+                    "OFIS & BIZNES UCHRASHUV", 
+                    "DAM OLISH & SAYR (CASUAL)", 
+                    "TANTANALI & TO'Y MAROSIMI", 
+                    "SMART CASUAL & KUNDALIK",
+                    "KECHKI BAZM & RESTORAN",
+                    "SPORT-CHIC & HARAKAT"
+                  ].map(preset => (
                     <button
                       key={preset}
                       type="button"
