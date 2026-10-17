@@ -34,8 +34,13 @@ export default function OrderForm({ prefillProduct, cart, clearCart, lang, t }) 
   }, [prefillProduct, lang]);
 
   const getCartSummaryText = () => {
-    if (cart.length > 0) {
-      return cart.map(item => `${item.name[lang] || item.name.uz} [${item.selectedSize}] x ${item.quantity}`).join(', ');
+    if (Array.isArray(cart) && cart.length > 0) {
+      return cart.map(item => {
+        const iName = typeof item?.name === 'object' && item.name !== null
+          ? (item.name[lang] || item.name.uz || Object.values(item.name)[0] || '')
+          : (item?.name || item?.title || '');
+        return `${iName} [${item.selectedSize || 'Standard'}] x ${item.quantity || 1}`;
+      }).join(', ');
     }
     return customProductText || '';
   };

@@ -14,7 +14,8 @@ import SectionDivider from './components/SectionDivider';
 import WorldCanvas3D from './components/WorldCanvas3D';
 
 import { translations } from './data/translations';
-import { products as initialProducts } from './data/products';
+import initialProducts from './data/products.json';
+import initialSettings from './data/siteSettings.json';
 import AdminPanel from './components/AdminPanel';
 import { ArrowUp, Send, Sparkles, SlidersHorizontal } from 'lucide-react';
 
@@ -23,7 +24,7 @@ export default function App() {
   const t = translations[lang] || translations.uz;
 
   // Dynamic Products and Admin View Mode State
-  const [productsList, setProductsList] = useState(initialProducts);
+  const [productsList, setProductsList] = useState(Array.isArray(initialProducts) ? initialProducts : []);
   const [viewMode, setViewMode] = useState(() => {
     return (typeof window !== 'undefined' && (window.location.pathname === '/admin' || window.location.hash === '#admin')) ? 'admin' : 'site';
   });
@@ -46,17 +47,31 @@ export default function App() {
   }, []);
 
   // Dynamic Categories and Contacts State
-  const [categoriesList, setCategoriesList] = useState([
-    { id: 'all', label: t.catalog.all || 'Barchasi' },
-    { id: 'dvoyka', label: 'Dvoykalar' },
-    { id: 'costume', label: 'Kostyumlar' },
-    { id: 'casual', label: 'Smart Casual' },
-    { id: 'accessories', label: 'Aksessuarlar' }
-  ]);
-  const [siteContacts, setSiteContacts] = useState({
+  const [categoriesList, setCategoriesList] = useState(() => {
+    const defaultCats = Array.isArray(initialSettings?.categories) && initialSettings.categories.length > 0
+      ? initialSettings.categories.map(c => ({ id: c.id, label: c.name }))
+      : [
+          { id: 'dvoyka', label: 'Dvoykalar' },
+          { id: 'costume', label: 'Kostyumlar' },
+          { id: 'casual', label: 'Smart Casual' },
+          { id: 'accessories', label: 'Aksessuarlar' }
+        ];
+    return [
+      { id: 'all', label: t.catalog.all || 'Barchasi' },
+      ...defaultCats
+    ];
+  });
+
+  const [siteContacts, setSiteContacts] = useState(initialSettings?.contacts || {
     mainPhone: '+998 98 311 33 37',
     branches: []
   });
+
+  // Dynamic Branches & Testimonials State
+  const [siteBranches, setSiteBranches] = useState(Array.isArray(initialSettings?.branches) ? initialSettings.branches : []);
+  const [siteTestimonials, setSiteTestimonials] = useState(Array.isArray(initialSettings?.testimonials) ? initialSettings.testimonials : []);
+  const [siteLooks, setSiteLooks] = useState(Array.isArray(initialSettings?.looks) ? initialSettings.looks : []);
+  const [siteHero, setSiteHero] = useState(initialSettings?.hero || {});
 
   // Fetch live products from backend API
   useEffect(() => {
@@ -69,12 +84,6 @@ export default function App() {
       })
       .catch(() => {});
   }, []);
-
-  // Dynamic Branches & Testimonials State
-  const [siteBranches, setSiteBranches] = useState([]);
-  const [siteTestimonials, setSiteTestimonials] = useState([]);
-  const [siteLooks, setSiteLooks] = useState([]);
-  const [siteHero, setSiteHero] = useState({});
 
   // Fetch live categories, contacts, branches, testimonials, looks, and hero settings
   useEffect(() => {
@@ -91,13 +100,13 @@ export default function App() {
           if (data.contacts) {
             setSiteContacts(data.contacts);
           }
-          if (Array.isArray(data.branches)) {
+          if (Array.isArray(data.branches) && data.branches.length > 0) {
             setSiteBranches(data.branches);
           }
-          if (Array.isArray(data.testimonials)) {
+          if (Array.isArray(data.testimonials) && data.testimonials.length > 0) {
             setSiteTestimonials(data.testimonials);
           }
-          if (Array.isArray(data.looks)) {
+          if (Array.isArray(data.looks) && data.looks.length > 0) {
             setSiteLooks(data.looks);
           }
           if (data.hero) {

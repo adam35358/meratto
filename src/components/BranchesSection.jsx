@@ -163,7 +163,7 @@ export default function BranchesSection({ lang, t, branchesData = [] }) {
             <div className="mt-8 rounded-2xl overflow-hidden border border-white/15 shadow-2xl bg-[#07080a] h-96 relative animate-fade-in">
               <iframe
                 title="Meratto va De Franko Filiallari Xaritasi"
-                src={`https://yandex.uz/map-widget/v1/?ll=${selectedBranch.coords.lng}%2C${selectedBranch.coords.lat}&z=14&pt=${selectedBranch.coords.lng}%2C${selectedBranch.coords.lat},pm2rdm`}
+                src={`https://yandex.uz/map-widget/v1/?ll=${selectedBranch?.coords?.lng || 69.2312}%2C${selectedBranch?.coords?.lat || 41.3142}&z=14&pt=${selectedBranch?.coords?.lng || 69.2312}%2C${selectedBranch?.coords?.lat || 41.3142},pm2rdm`}
                 width="100%"
                 height="100%"
                 frameBorder="0"

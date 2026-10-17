@@ -5,18 +5,32 @@ import { branches } from '../data/branches';
 export default function ProductModal({ product, isOpen, onClose, lang, t, onAddToCart, onQuickOrder }) {
   if (!isOpen || !product) return null;
 
-  const [selectedSize, setSelectedSize] = useState(product.sizes[0] || 'L');
+  const productSizes = Array.isArray(product?.sizes) ? product.sizes : [];
+  const [selectedSize, setSelectedSize] = useState(productSizes[0] || 'L');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [justAdded, setJustAdded] = useState(false);
 
-  const prodImages = Array.isArray(product.images) && product.images.length > 0 ? product.images : [product.image];
-  const activeImage = prodImages[activeImageIndex] || prodImages[0] || product.image;
-  const activePosition = product.imagePositions?.[activeImageIndex] || (activeImageIndex === 0 ? product.imagePosition : null) || { x: 50, y: 50 };
+  const prodImages = Array.isArray(product?.images) && product.images.length > 0 ? product.images : [product?.image].filter(Boolean);
+  const activeImage = prodImages[activeImageIndex] || prodImages[0] || product?.image || '';
+  const activePosition = product?.imagePositions?.[activeImageIndex] || (activeImageIndex === 0 ? product?.imagePosition : null) || { x: 50, y: 50 };
 
   const formatPrice = (num) => {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    if (num === undefined || num === null || isNaN(Number(num))) return '0';
+    return Number(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   };
+
+  const productName = typeof product?.name === 'object' && product.name !== null
+    ? (product.name[lang] || product.name.uz || Object.values(product.name)[0] || '')
+    : (product?.name || product?.nameUz || '');
+
+  const productDesc = typeof product?.description === 'object' && product.description !== null
+    ? (product.description[lang] || product.description.uz || Object.values(product.description)[0] || '')
+    : (product?.description || '');
+
+  const productFabric = typeof product?.fabric === 'object' && product.fabric !== null
+    ? (product.fabric[lang] || product.fabric.uz || Object.values(product.fabric)[0] || '')
+    : (product?.fabric || '');
 
   const handleAdd = () => {
     onAddToCart(product, selectedSize, quantity);
@@ -55,7 +69,7 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
             <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-[#090b0e] border border-white/[0.08] relative group">
               <img 
                 src={activeImage} 
-                alt={product.name[lang] || product.name.uz}
+                alt={productName}
                 className="w-full h-full object-cover transition-transform duration-700 ease-silk group-hover:scale-105"
                 style={{
                   objectPosition: `${activePosition.x ?? 50}% ${activePosition.y ?? 50}%`
@@ -66,7 +80,7 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span>{product.code || 'MRT-ARCHIVE'}</span>
                 </span>
-                {(product.isLook || (product.lookItems && product.lookItems.length > 0)) && (
+                {(product.isLook || (Array.isArray(product.lookItems) && product.lookItems.length > 0)) && (
                   <span className="woufx-badge bg-[#E5C378]/25 border-[#E5C378]/40 text-[#E5C378] font-bold flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-[#E5C378]" />
                     <span>TAYYOR LOOK</span>
@@ -126,7 +140,7 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
               </div>
 
               <h2 className="text-2xl sm:text-3xl font-outfit font-light text-white leading-tight tracking-[-0.02em]">
-                {product.name[lang] || product.name.uz}
+                {productName}
               </h2>
 
               {/* Price */}
@@ -160,7 +174,7 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
               </div>
 
               {/* Tayyor Look Breakdown (Komplekt tarkibi va alohida narxlari) */}
-              {product.lookItems && product.lookItems.length > 0 && (
+              {Array.isArray(product.lookItems) && product.lookItems.length > 0 && (
                 <div className="mt-4 p-4 rounded-2xl bg-gradient-to-br from-[#E5C378]/10 via-[#16181f] to-transparent border border-[#E5C378]/30 space-y-2.5">
                   <div className="flex items-center justify-between text-xs font-mono text-[#E5C378]">
                     <span className="font-semibold uppercase tracking-wider flex items-center gap-1.5">
@@ -172,13 +186,13 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
                   
                   <div className="divide-y divide-white/5 pt-1">
                     {product.lookItems.map((item, idx) => (
-                      <div key={item.id || idx} className="py-2 flex items-center justify-between text-xs">
+                      <div key={(typeof item === 'object' && item ? item.id : null) || idx} className="py-2 flex items-center justify-between text-xs">
                         <span className="text-white font-medium flex items-center gap-2">
                           <span className="text-[#E5C378] font-mono text-[11px] font-bold">{idx + 1}.</span>
-                          <span>{item.name}</span>
+                          <span>{(typeof item === 'object' && item ? item.name : item) || ''}</span>
                         </span>
                         <span className="font-mono text-[#E5C378] font-semibold">
-                          {formatPrice(item.price)} <span className="text-[10px] font-normal text-[#8f96a0]">so'm</span>
+                          {formatPrice(typeof item === 'object' && item ? item.price : 0)} <span className="text-[10px] font-normal text-[#8f96a0]">so'm</span>
                         </span>
                       </div>
                     ))}
@@ -188,16 +202,16 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
 
               {/* Description */}
               <p className="mt-4 text-xs sm:text-sm text-woufx-muted leading-relaxed font-sans font-light">
-                {product.description[lang] || product.description.uz}
+                {productDesc}
               </p>
 
               {/* Fabric Specs */}
-              {product.fabric && (
+              {productFabric && (
                 <div className="mt-4 p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.06] flex items-start gap-2.5 text-xs text-woufx-muted">
                   <ShieldCheck className="w-4 h-4 text-woufx-gold shrink-0 mt-0.5" />
                   <div>
                     <span className="font-mono text-white text-[11px] uppercase tracking-wider">{t.modal.fabric}: </span>
-                    <span className="font-sans font-light">{product.fabric[lang] || product.fabric.uz}</span>
+                    <span className="font-sans font-light">{productFabric}</span>
                   </div>
                 </div>
               )}
@@ -238,7 +252,7 @@ export default function ProductModal({ product, isOpen, onClose, lang, t, onAddT
                   <span className="text-white font-mono">{selectedSize}</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {product.sizes.map((sz) => (
+                  {productSizes.map((sz) => (
                     <button
                       key={sz}
                       onClick={() => setSelectedSize(sz)}

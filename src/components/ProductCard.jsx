@@ -8,7 +8,8 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
   const [isHovered, setIsHovered] = useState(false);
 
   const formatPrice = (num) => {
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    if (num === undefined || num === null || isNaN(Number(num))) return '0';
+    return Number(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   };
 
   const getBranchNames = (branchIds) => {
@@ -22,7 +23,7 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
     };
     if (Array.isArray(branches) && branches.length > 0) {
       branches.forEach(b => {
-        if (b.id && b.name) branchNameMap[b.id] = b.name;
+        if (b && b.id && b.name) branchNameMap[b.id] = b.name;
       });
     }
     const totalCount = Array.isArray(branches) && branches.length > 0 ? branches.length : 3;
@@ -32,6 +33,16 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
     const names = branchIds.map(id => branchNameMap[id] || id);
     return names.join(', ');
   };
+
+  const productName = typeof product?.name === 'object' && product.name !== null
+    ? (product.name[lang] || product.name.uz || Object.values(product.name)[0] || '')
+    : (product?.name || product?.nameUz || '');
+
+  const productDesc = typeof product?.description === 'object' && product.description !== null
+    ? (product.description[lang] || product.description.uz || Object.values(product.description)[0] || '')
+    : (product?.description || '');
+
+  const productSizes = Array.isArray(product?.sizes) ? product.sizes : [];
 
   // 3D Tilt calculation on mouse move
   const handleMouseMove = (e) => {
@@ -97,7 +108,7 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
         <div className="relative aspect-[3/4] overflow-hidden bg-[#07080a]">
           <img 
             src={product.image} 
-            alt={product.name[lang] || product.name.uz} 
+            alt={productName} 
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
             style={{
               objectPosition: `${(product.imagePositions?.[0]?.x ?? product.imagePosition?.x ?? 50)}% ${(product.imagePositions?.[0]?.y ?? product.imagePosition?.y ?? 50)}%`
@@ -115,7 +126,7 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
             </span>
 
             <div className="flex items-center gap-1.5">
-              {(product.isLook || (product.lookItems && product.lookItems.length > 0)) && (
+              {(product.isLook || (Array.isArray(product.lookItems) && product.lookItems.length > 0)) && (
                 <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#E5C378]/25 text-[#E5C378] backdrop-blur-md border border-[#E5C378]/40 font-semibold flex items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5 text-[#E5C378]" />
                   <span>LOOK</span>
@@ -142,14 +153,14 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
           <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between px-3 py-1.5 rounded-xl bg-[#07080a]/85 backdrop-blur-md border border-white/10 text-[11px] z-10">
             <span className="font-mono text-[9px] uppercase tracking-wider text-[#8f96a0]">{t.catalog.sizes || "O'lchamlar"}:</span>
             <div className="flex gap-1 flex-wrap">
-              {product.sizes.slice(0, 4).map((s) => (
+              {productSizes.slice(0, 4).map((s) => (
                 <span key={s} className="px-1.5 py-0.5 rounded bg-white/[0.06] font-mono text-[9px] text-[#eef0f3]">
-                  {s.replace(/ \(.+\)/, '')}
+                  {String(s).replace(/ \(.+\)/, '')}
                 </span>
               ))}
-              {product.sizes.length > 4 && (
+              {productSizes.length > 4 && (
                 <span className="px-1 py-0.5 rounded bg-white/[0.04] font-mono text-[9px] text-[#8f96a0]">
-                  +{product.sizes.length - 4}
+                  +{productSizes.length - 4}
                 </span>
               )}
             </div>
@@ -168,11 +179,11 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
             </div>
 
             <h3 className="font-display font-medium text-base text-white group-hover:text-[#E5C378] transition-colors line-clamp-1 leading-snug">
-              {product.name[lang] || product.name.uz}
+              {productName}
             </h3>
 
             <p className="text-xs text-[#8f96a0] mt-1 line-clamp-2 leading-relaxed font-normal">
-              {product.description[lang] || product.description.uz}
+              {productDesc}
             </p>
 
             {/* Model code & Available branches */}
@@ -187,14 +198,14 @@ export default function ProductCard({ product, lang, t, onQuickView, onAddToCart
             </div>
 
             {/* Look Items Summary Pill */}
-            {product.lookItems && product.lookItems.length > 0 && (
+            {Array.isArray(product.lookItems) && product.lookItems.length > 0 && (
               <div className="mt-2 p-2 rounded-xl bg-[#E5C378]/5 border border-[#E5C378]/20 text-[10px] space-y-1">
                 <div className="font-mono text-[#E5C378] font-medium flex items-center gap-1 text-[9px] uppercase tracking-wider">
                   <Sparkles className="w-2.5 h-2.5" />
                   <span>Komplekt tarkibi ({product.lookItems.length} ta):</span>
                 </div>
                 <div className="text-[#eef0f3] text-[10px] truncate font-sans">
-                  {product.lookItems.map(i => `${i.name} (${formatPrice(i.price)} so'm)`).join(' • ')}
+                  {product.lookItems.map(i => `${(typeof i === 'object' && i ? i.name : i) || ''} (${formatPrice(typeof i === 'object' && i ? i.price : 0)} so'm)`).join(' • ')}
                 </div>
               </div>
             )}
