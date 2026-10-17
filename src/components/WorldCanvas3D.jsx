@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
-export default function WorldCanvas3D({ scrollProgress = 0 }) {
+export default function WorldCanvas3D() {
   const canvasRef = useRef(null);
   const stateRef = useRef({
     mouse: { x: 0, y: 0, targetX: 0, targetY: 0 },
@@ -47,128 +47,334 @@ export default function WorldCanvas3D({ scrollProgress = 0 }) {
     window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
     // =========================================================================
-    // 3D SARTORIAL DECOMPOSITION GEOMETRY (KIYIM DEKOMPOZITSIYASI)
+    // 3D SARTORIAL GARMENT GEOMETRIES (SHAFFOF KIYIMLAR DEKOMPOZITSIYASI)
+    // Detailed polygons for translucent fills & sartorial pick-stitch outlines
     // =========================================================================
-    // Layer 1: Tailored Jacket / Blouson Shell (Pidjak/Kurtka tashqi qatlami)
-    const jacketShellPaths = [
-      // Left front panel & lapel
-      [[-8, -135, 0], [-45, -130, 0], [-105, -95, 0], [-125, -25, 0], [-115, 75, 0], [-55, 95, 0], [-10, 85, 0], [-10, -50, 0], [-35, -75, 0], [-8, -135, 0]],
-      // Right front panel & lapel
-      [[8, -135, 0], [45, -130, 0], [105, -95, 0], [125, -25, 0], [115, 75, 0], [55, 95, 0], [10, 85, 0], [10, -50, 0], [35, -75, 0], [8, -135, 0]],
-      // Collar back contour
-      [[-45, -130, 0], [-25, -150, -15], [0, -153, -20], [25, -150, -15], [45, -130, 0]],
-      // Left sleeve contour
-      [[-105, -95, 0], [-150, -30, -10], [-160, 60, -15], [-130, 75, -15], [-115, 20, -5], [-125, -25, 0]],
-      // Right sleeve contour
-      [[105, -95, 0], [150, -30, -10], [160, 60, -15], [130, 75, -15], [115, 20, -5], [125, -25, 0]],
-      // Left breast welt pocket
-      [[-35, -25, 5], [-75, -20, 5], [-75, -12, 5], [-35, -17, 5], [-35, -25, 5]],
-      // Left lower flap pocket
-      [[-45, 40, 5], [-95, 45, 5], [-95, 58, 5], [-45, 53, 5], [-45, 40, 5]],
-      // Right lower flap pocket
-      [[45, 40, 5], [95, 45, 5], [95, 58, 5], [45, 53, 5], [45, 40, 5]],
-      // Center buttons
-      [[0, -10, 8], [0, -6, 8]],
-      [[0, 30, 8], [0, 34, 8]]
+
+    // 1. Translucent Tailored Jacket / Blouson
+    const jacketPanels = [
+      // Left Front Quarters (Panel with translucent fill)
+      {
+        type: 'polygon',
+        pts: [[-12, -145, 0], [-55, -140, 0], [-115, -100, 0], [-135, -25, 0], [-120, 85, 0], [-60, 105, 0], [-12, 95, 0], [-12, -45, 0], [-42, -75, 0]],
+        fill: 'rgba(229, 195, 120, 0.045)',
+        stroke: 'rgba(229, 195, 120, 0.65)',
+        width: 1.4
+      },
+      // Right Front Quarters
+      {
+        type: 'polygon',
+        pts: [[12, -145, 0], [55, -140, 0], [115, -100, 0], [135, -25, 0], [120, 85, 0], [60, 105, 0], [12, 95, 0], [12, -45, 0], [42, -75, 0]],
+        fill: 'rgba(229, 195, 120, 0.045)',
+        stroke: 'rgba(229, 195, 120, 0.65)',
+        width: 1.4
+      },
+      // Left Lapel Roll (Faceted silk/wool lapel facing)
+      {
+        type: 'polygon',
+        pts: [[-12, -145, 5], [-42, -75, 8], [-12, -45, 6], [-12, -145, 5]],
+        fill: 'rgba(229, 195, 120, 0.08)',
+        stroke: 'rgba(229, 195, 120, 0.8)',
+        width: 1.6
+      },
+      // Right Lapel Roll
+      {
+        type: 'polygon',
+        pts: [[12, -145, 5], [42, -75, 8], [12, -45, 6], [12, -145, 5]],
+        fill: 'rgba(229, 195, 120, 0.08)',
+        stroke: 'rgba(229, 195, 120, 0.8)',
+        width: 1.6
+      },
+      // Stand Collar (Curved back contour in 3D depth)
+      {
+        type: 'line',
+        pts: [[-55, -140, 0], [-35, -160, -20], [0, -165, -25], [35, -160, -20], [55, -140, 0]],
+        stroke: 'rgba(229, 195, 120, 0.55)',
+        width: 1.2
+      },
+      // Left Sleeve Outer Silhouette
+      {
+        type: 'polygon',
+        pts: [[-115, -100, 0], [-160, -35, -10], [-170, 65, -15], [-135, 80, -15], [-120, 25, -5], [-135, -25, 0]],
+        fill: 'rgba(229, 195, 120, 0.03)',
+        stroke: 'rgba(229, 195, 120, 0.5)',
+        width: 1.2
+      },
+      // Right Sleeve Outer Silhouette
+      {
+        type: 'polygon',
+        pts: [[115, -100, 0], [160, -35, -10], [170, 65, -15], [135, 80, -15], [120, 25, -5], [135, -25, 0]],
+        fill: 'rgba(229, 195, 120, 0.03)',
+        stroke: 'rgba(229, 195, 120, 0.5)',
+        width: 1.2
+      },
+      // Breast Barchetta Welt Pocket (Italiancha qayiqcha cho'ntak)
+      {
+        type: 'polygon',
+        pts: [[-35, -25, 6], [-80, -20, 6], [-80, -10, 6], [-35, -15, 6]],
+        fill: 'rgba(229, 195, 120, 0.07)',
+        stroke: 'rgba(229, 195, 120, 0.85)',
+        width: 1.2
+      },
+      // Lower Flap Pockets
+      {
+        type: 'polygon',
+        pts: [[-50, 45, 6], [-105, 50, 6], [-105, 65, 6], [-50, 60, 6]],
+        fill: 'rgba(229, 195, 120, 0.05)',
+        stroke: 'rgba(229, 195, 120, 0.6)',
+        width: 1.0
+      },
+      {
+        type: 'polygon',
+        pts: [[50, 45, 6], [105, 50, 6], [105, 65, 6], [50, 60, 6]],
+        fill: 'rgba(229, 195, 120, 0.05)',
+        stroke: 'rgba(229, 195, 120, 0.6)',
+        width: 1.0
+      },
+      // Sartorial Basting Stitches (Pick-Stitch / Qaviq choklar - dashed gold)
+      {
+        type: 'line',
+        pts: [[-10, -40, 4], [-40, -70, 6], [-52, -135, 2]],
+        stroke: 'rgba(229, 195, 120, 0.75)',
+        width: 1.0,
+        dashed: [3, 4]
+      },
+      {
+        type: 'line',
+        pts: [[10, -40, 4], [40, -70, 6], [52, -135, 2]],
+        stroke: 'rgba(229, 195, 120, 0.75)',
+        width: 1.0,
+        dashed: [3, 4]
+      }
     ];
 
-    // Layer 2: Floating Silk Twill Lining & Floating Canvas (Ichki ipak astar va qovurg'a)
-    const liningPaths = [
-      // Left lining panel (slight offset & dashed silk texture)
-      [[-10, -120, -25], [-40, -115, -25], [-85, -85, -25], [-100, -20, -25], [-90, 65, -25], [-45, 80, -25], [-10, 75, -25], [-10, -120, -25]],
-      // Right lining panel
-      [[10, -120, -25], [40, -115, -25], [85, -85, -25], [100, -20, -25], [90, 65, -25], [45, 80, -25], [10, 75, -25], [10, -120, -25]],
-      // Internal passport pocket
-      [[-25, 10, -20], [-60, 15, -20], [-60, 45, -20], [-25, 40, -20], [-25, 10, -20]],
-      // Sartorial canvas cross-hatch structure
-      [[-35, -60, -22], [-70, -20, -22]],
-      [[-30, -30, -22], [-65, 10, -22]],
-      [[35, -60, -22], [70, -20, -22]],
-      [[30, -30, -22], [65, 10, -22]]
+    // Floating Horn Buttons with cross-stitch thread holes
+    const jacketButtons = [
+      { x: 0, y: -12, z: 8, r: 4.5 },
+      { x: 0, y: 35, z: 8, r: 4.5 }
     ];
 
-    // Layer 3: Base Cotton Polo / T-Shirt Contour (Baza qatlami)
-    const basePoloPaths = [
-      // Collar / Ribbed neckline
-      [[-32, -125, -45], [-15, -105, -40], [0, -100, -38], [15, -105, -40], [32, -125, -45]],
-      // Placket front
-      [[0, -100, -38], [0, -45, -38]],
-      // Torso outline
-      [[-32, -125, -45], [-75, -95, -50], [-70, 70, -50], [70, 70, -50], [75, -95, -50], [32, -125, -45]],
-      // Short sleeves
-      [[-75, -95, -50], [-105, -55, -55], [-85, -45, -55], [-72, -60, -50]],
-      [[75, -95, -50], [105, -55, -55], [85, -45, -55], [72, -60, -50]]
+    // 2. Translucent Floating Silk Canvas & Twill Lining (Ichki qovurg'a va ipak astar)
+    const liningPanels = [
+      // Left anatomical canvas panel
+      {
+        type: 'polygon',
+        pts: [[-10, -130, -30], [-45, -125, -30], [-95, -90, -30], [-110, -20, -30], [-100, 75, -30], [-50, 90, -30], [-10, 82, -30]],
+        fill: 'rgba(79, 199, 154, 0.04)',
+        stroke: 'rgba(79, 199, 154, 0.55)',
+        width: 1.2
+      },
+      // Right anatomical canvas panel
+      {
+        type: 'polygon',
+        pts: [[10, -130, -30], [45, -125, -30], [95, -90, -30], [110, -20, -30], [100, 75, -30], [50, 90, -30], [10, 82, -30]],
+        fill: 'rgba(79, 199, 154, 0.04)',
+        stroke: 'rgba(79, 199, 154, 0.55)',
+        width: 1.2
+      },
+      // Interior Passport Pocket with Meratto label stitch
+      {
+        type: 'polygon',
+        pts: [[-28, 10, -25], [-70, 15, -25], [-70, 50, -25], [-28, 45, -25]],
+        fill: 'rgba(79, 199, 154, 0.08)',
+        stroke: 'rgba(79, 199, 154, 0.75)',
+        width: 1.1
+      },
+      // Horsehair Canvas Cross-Hatching Weave (Ichki qovurg'a tolasi)
+      { type: 'line', pts: [[-40, -70, -28], [-80, -30, -28]], stroke: 'rgba(79, 199, 154, 0.4)', width: 0.8, dashed: [2, 3] },
+      { type: 'line', pts: [[-35, -40, -28], [-75, 0, -28]], stroke: 'rgba(79, 199, 154, 0.4)', width: 0.8, dashed: [2, 3] },
+      { type: 'line', pts: [[-30, -10, -28], [-70, 30, -28]], stroke: 'rgba(79, 199, 154, 0.4)', width: 0.8, dashed: [2, 3] },
+      { type: 'line', pts: [[40, -70, -28], [80, -30, -28]], stroke: 'rgba(79, 199, 154, 0.4)', width: 0.8, dashed: [2, 3] },
+      { type: 'line', pts: [[35, -40, -28], [75, 0, -28]], stroke: 'rgba(79, 199, 154, 0.4)', width: 0.8, dashed: [2, 3] },
+      { type: 'line', pts: [[30, -10, -28], [70, 30, -28]], stroke: 'rgba(79, 199, 154, 0.4)', width: 0.8, dashed: [2, 3] }
     ];
 
-    // Layer 4: Tapered Trousers with Sartorial Crease (Shim qatlami)
-    const trousersPaths = [
-      // Waistband
-      [[-58, 100, -20], [58, 100, -20], [54, 115, -20], [-54, 115, -20], [-58, 100, -20]],
-      // Fly front seam
-      [[0, 115, -18], [0, 145, -18]],
-      // Left leg outline
-      [[-54, 115, -20], [-60, 190, -15], [-50, 275, -10], [-22, 275, -10], [-12, 190, -15], [0, 150, -18]],
-      // Right leg outline
-      [[54, 115, -20], [60, 190, -15], [50, 275, -10], [22, 275, -10], [12, 190, -15], [0, 150, -18]],
-      // Center sharp crease lines (dazmol chiziqlari)
-      [[-36, 120, -15], [-36, 275, -8]],
-      [[36, 120, -15], [36, 275, -8]]
+    // 3. Translucent Egyptian Cotton Base Polo & Weft Mesh (Baza qatlami)
+    const poloPanels = [
+      // Ribbed Knit Neckline & Collar Contour
+      {
+        type: 'polygon',
+        pts: [[-35, -130, -55], [-18, -110, -50], [0, -105, -48], [18, -110, -50], [35, -130, -55]],
+        fill: 'rgba(96, 165, 250, 0.05)',
+        stroke: 'rgba(96, 165, 250, 0.65)',
+        width: 1.3
+      },
+      // Front 3-Button Placket
+      {
+        type: 'polygon',
+        pts: [[-9, -105, -48], [9, -105, -48], [9, -45, -48], [-9, -45, -48]],
+        fill: 'rgba(96, 165, 250, 0.08)',
+        stroke: 'rgba(96, 165, 250, 0.8)',
+        width: 1.1
+      },
+      // Torso Fabric Panel
+      {
+        type: 'polygon',
+        pts: [[-35, -130, -55], [-80, -100, -60], [-75, 80, -60], [75, 80, -60], [80, -100, -60], [35, -130, -55]],
+        fill: 'rgba(96, 165, 250, 0.035)',
+        stroke: 'rgba(96, 165, 250, 0.5)',
+        width: 1.2
+      },
+      // Micro Fabric Weave Grid Lines (Ko'krak sohasidagi mato to'qimasi)
+      { type: 'line', pts: [[-50, -20, -52], [50, -20, -52]], stroke: 'rgba(96, 165, 250, 0.25)', width: 0.7 },
+      { type: 'line', pts: [[-50, 0, -52], [50, 0, -52]], stroke: 'rgba(96, 165, 250, 0.25)', width: 0.7 },
+      { type: 'line', pts: [[-50, 20, -52], [50, 20, -52]], stroke: 'rgba(96, 165, 250, 0.25)', width: 0.7 },
+      { type: 'line', pts: [[-25, -35, -52], [-25, 35, -52]], stroke: 'rgba(96, 165, 250, 0.25)', width: 0.7 },
+      { type: 'line', pts: [[0, -35, -52], [0, 35, -52]], stroke: 'rgba(96, 165, 250, 0.25)', width: 0.7 },
+      { type: 'line', pts: [[25, -35, -52], [25, 35, -52]], stroke: 'rgba(96, 165, 250, 0.25)', width: 0.7 }
     ];
 
-    // Layer 5: Handcrafted Loafers & Soles (Poyabzal qatlami)
-    const loafersPaths = [
-      // Left loafer profile
-      [[-46, 290, 15], [-20, 290, 15], [-16, 315, 25], [-26, 335, 30], [-46, 335, 30], [-52, 315, 25], [-46, 290, 15]],
-      // Left strap saddle
-      [[-48, 308, 22], [-22, 308, 22]],
-      // Right loafer profile
-      [[46, 290, 15], [20, 290, 15], [16, 315, 25], [26, 335, 30], [46, 335, 30], [52, 315, 25], [46, 290, 15]],
-      // Right strap saddle
-      [[48, 308, 22], [22, 308, 22]]
+    // 4. Translucent Tapered Trousers with Sharp Crease (Shim qatlami)
+    const trousersPanels = [
+      // Extended Sartorial Waistband (Gurkha/tab waistband)
+      {
+        type: 'polygon',
+        pts: [[-62, 105, -20], [62, 105, -20], [58, 122, -20], [-58, 122, -20]],
+        fill: 'rgba(245, 158, 11, 0.06)',
+        stroke: 'rgba(245, 158, 11, 0.7)',
+        width: 1.3
+      },
+      // Left Leg Silhouette with translucent fill
+      {
+        type: 'polygon',
+        pts: [[-58, 122, -20], [-65, 200, -15], [-54, 290, -10], [-24, 290, -10], [-14, 200, -15], [0, 155, -18]],
+        fill: 'rgba(245, 158, 11, 0.035)',
+        stroke: 'rgba(245, 158, 11, 0.55)',
+        width: 1.2
+      },
+      // Right Leg Silhouette
+      {
+        type: 'polygon',
+        pts: [[58, 122, -20], [65, 200, -15], [54, 290, -10], [24, 290, -10], [14, 200, -15], [0, 155, -18]],
+        fill: 'rgba(245, 158, 11, 0.035)',
+        stroke: 'rgba(245, 158, 11, 0.55)',
+        width: 1.2
+      },
+      // Razor-Sharp Center Crease Lines (Dazmol chiziqlari)
+      {
+        type: 'line',
+        pts: [[-39, 128, -12], [-39, 290, -8]],
+        stroke: 'rgba(245, 158, 11, 0.9)',
+        width: 1.5
+      },
+      {
+        type: 'line',
+        pts: [[39, 128, -12], [39, 290, -8]],
+        stroke: 'rgba(245, 158, 11, 0.9)',
+        width: 1.5
+      },
+      // Slant Pocket Welts
+      { type: 'line', pts: [[-52, 124, -18], [-38, 160, -18]], stroke: 'rgba(245, 158, 11, 0.7)', width: 1.1 },
+      { type: 'line', pts: [[52, 124, -18], [38, 160, -18]], stroke: 'rgba(245, 158, 11, 0.7)', width: 1.1 }
     ];
 
-    // 3D Decomposition Labels with World Coordinates
-    const decompMarkers = [
-      { text: "01 // VIRGIN WOOL SHELL", pos: [-155, -80, 45], color: "#E5C378" },
-      { text: "02 // BEMBERG SILK LINING", pos: [145, -30, -15], color: "#4fc79a" },
-      { text: "03 // GIZA COTTON POLO", pos: [-130, 20, -45], color: "#60a5fa" },
-      { text: "04 // TAPERED CHINOS", pos: [120, 180, -20], color: "#f59e0b" },
-      { text: "05 // HANDMADE LOAFER", pos: [-110, 315, 20], color: "#ec4899" }
+    // 5. Translucent Hand-Stitched Loafers & Soles (Poyabzal arxitekturasi)
+    const loafersPanels = [
+      // Left Loafer Upper Silhouette
+      {
+        type: 'polygon',
+        pts: [[-48, 305, 15], [-22, 305, 15], [-18, 332, 25], [-28, 352, 30], [-48, 352, 30], [-55, 332, 25]],
+        fill: 'rgba(236, 72, 153, 0.04)',
+        stroke: 'rgba(236, 72, 153, 0.65)',
+        width: 1.3
+      },
+      // Left Penny Saddle Strap with cutout
+      {
+        type: 'line',
+        pts: [[-52, 324, 22], [-22, 324, 22]],
+        stroke: 'rgba(236, 72, 153, 0.85)',
+        width: 1.4
+      },
+      // Right Loafer Upper Silhouette
+      {
+        type: 'polygon',
+        pts: [[48, 305, 15], [22, 305, 15], [18, 332, 25], [28, 352, 30], [48, 352, 30], [55, 332, 25]],
+        fill: 'rgba(236, 72, 153, 0.04)',
+        stroke: 'rgba(236, 72, 153, 0.65)',
+        width: 1.3
+      },
+      // Right Penny Saddle Strap
+      {
+        type: 'line',
+        pts: [[52, 324, 22], [22, 324, 22]],
+        stroke: 'rgba(236, 72, 153, 0.85)',
+        width: 1.4
+      },
+      // Goodyear Welt Stitch Line (dashed thread perimeter)
+      {
+        type: 'line',
+        pts: [[-57, 336, 23], [-50, 356, 28], [-26, 356, 28], [-16, 336, 23]],
+        stroke: 'rgba(229, 195, 120, 0.7)',
+        width: 1.0,
+        dashed: [2, 3]
+      },
+      {
+        type: 'line',
+        pts: [[57, 336, 23], [50, 356, 28], [26, 356, 28], [16, 336, 23]],
+        stroke: 'rgba(229, 195, 120, 0.7)',
+        width: 1.0,
+        dashed: [2, 3]
+      }
     ];
 
-    // 3D Infinite Perspective Tunnel Rings (Concentric flight hoops)
-    const tunnelRings = [];
-    for (let r = 0; r < 9; r++) {
-      tunnelRings.push({
-        z: r * 280 - 600,
-        radius: 320 + r * 35,
-        color: r % 2 === 0 ? 'rgba(229,195,120,0.18)' : 'rgba(255,255,255,0.08)'
+    // =========================================================================
+    // SARTORIAL WEAVING THREAD STREAMS (IP TOLALARI OQIMI)
+    // Dynamic 3D curves flowing through space linking garment components
+    // =========================================================================
+    const threadStreamCount = 14;
+    const threadStreams = [];
+    for (let s = 0; s < threadStreamCount; s++) {
+      const angle = (s / threadStreamCount) * Math.PI * 2;
+      const radius = 180 + (s % 3) * 65;
+      const knots = [];
+      const knotCount = 18;
+      for (let k = 0; k < knotCount; k++) {
+        const kz = k * 180 - 1600;
+        const wave = Math.sin(k * 0.45 + s) * 55;
+        knots.push({
+          x: Math.cos(angle + k * 0.18) * (radius + wave),
+          y: Math.sin(angle + k * 0.18) * (radius * 0.75 + wave) + (k * 22 - 180),
+          z: kz
+        });
+      }
+      threadStreams.push({
+        knots,
+        color: s % 3 === 0 
+          ? 'rgba(229, 195, 120, 0.45)' // Gold Silk Thread
+          : s % 3 === 1 
+            ? 'rgba(79, 199, 154, 0.35)' // Emerald Lining Thread
+            : 'rgba(255, 255, 255, 0.25)', // White Basting Thread
+        width: s % 2 === 0 ? 1.0 : 0.7,
+        dashed: s % 4 === 0
       });
     }
 
-    // 3D Boutique Nodes (Tashkent 3-Node Physical Network)
-    const boutiqueNodes = [
-      { name: "Qoratosh Meratto", pos: [-240, 60, -120], color: '#E5C378' },
-      { name: "Chilonzor Meratto", pos: [220, 120, -80], color: '#4fc79a' },
-      { name: "De Franko", pos: [0, -180, -150], color: '#E5C378' }
-    ];
-
-    // 3D High-Velocity Spatial Warp Thread Particles
-    const particleCount = 850;
-    const particles = [];
-    for (let i = 0; i < particleCount; i++) {
-      particles.push({
-        x: (Math.random() - 0.5) * 2400,
-        y: (Math.random() - 0.5) * 2400,
-        z: Math.random() * 2600 - 800,
-        speed: Math.random() * 3.2 + 1.5,
-        size: Math.random() * 1.8 + 0.6,
-        color: Math.random() > 0.75 ? 'rgba(229,195,120,0.7)' : 'rgba(255,255,255,0.4)'
+    // Elongated Fiber Particles (Tolalar va mikro-iplar)
+    const fiberCount = 420;
+    const fibers = [];
+    for (let i = 0; i < fiberCount; i++) {
+      fibers.push({
+        x: (Math.random() - 0.5) * 1900,
+        y: (Math.random() - 0.5) * 2200,
+        z: Math.random() * 3200 - 1800,
+        length: Math.random() * 28 + 14,
+        curve: (Math.random() - 0.5) * 18,
+        speed: Math.random() * 3.8 + 1.8,
+        color: Math.random() > 0.65 ? 'rgba(229, 195, 120, 0.75)' : 'rgba(255, 255, 255, 0.45)'
       });
     }
 
+    // 3D Technical Tailoring HUD Labels
+    const sartorialHudMarkers = [
+      { text: "01 // TASHQI QOBIQ: VIRGIN WOOL 15.5μ", pos: [-165, -95, 50], color: "#E5C378" },
+      { text: "02 // ICHKI QOVURG'A: BEMBERG SILK TWILL", pos: [155, -45, -20], color: "#4fc79a" },
+      { text: "03 // BAZA MATOSI: MISR PAXTA TRIKOTAJ", pos: [-145, 15, -60], color: "#60a5fa" },
+      { text: "04 // SHIM BICHIMI: ERGONOMIC TAPERED", pos: [135, 195, -25], color: "#f59e0b" },
+      { text: "05 // POYABZAL: BUZOQ TERISI & WELT CHOK", pos: [-125, 340, 25], color: "#ec4899" }
+    ];
+
     // =========================================================================
-    // 3D ROTATION & PROJECTION ENGINE
+    // 3D MATH & PROJECTION ENGINE
     // =========================================================================
     const rotateX = (x, y, z, angle) => {
       const cos = Math.cos(angle);
@@ -182,19 +388,12 @@ export default function WorldCanvas3D({ scrollProgress = 0 }) {
       return [x * cos + z * sin, y, -x * sin + z * cos];
     };
 
-    const rotateZ = (x, y, z, angle) => {
-      const cos = Math.cos(angle);
-      const sin = Math.sin(angle);
-      return [x * cos - y * sin, x * sin + y * cos, z];
-    };
-
-    // Project 3D point into screen coordinates with camera depth
     const project = (x, y, z, camX, camY, camZ, fov, cx, cy) => {
       const relX = x - camX;
       const relY = y - camY;
       const relZ = z - camZ;
 
-      if (relZ <= 10) return null; // Behind camera plane
+      if (relZ <= 8) return null; // Behind camera plane
       const scale = fov / relZ;
       return {
         x: cx + relX * scale,
@@ -204,32 +403,32 @@ export default function WorldCanvas3D({ scrollProgress = 0 }) {
       };
     };
 
-    // Camera inertia
+    // Camera State
     let camX = 0;
-    let camY = 0;
-    let camZ = 650;
+    let camY = -40;
+    let camZ = 700;
     let rotX = 0;
     let rotY = 0;
 
     // =========================================================================
-    // 60 FPS 3D RENDER LOOP
+    // 60 FPS RENDER LOOP
     // =========================================================================
     const render = () => {
       animationId = requestAnimationFrame(render);
-      time += 0.015;
+      time += 0.014;
 
       const w = stateRef.current.width;
       const h = stateRef.current.height;
       const cx = w * 0.5;
       const cy = h * 0.5;
-      const fov = 620;
+      const fov = Math.min(w, h) > 768 ? 640 : 520;
 
       // Mouse inertia damping
       const mouse = stateRef.current.mouse;
       mouse.x += (mouse.targetX - mouse.x) * 0.05;
       mouse.y += (mouse.targetY - mouse.y) * 0.05;
 
-      // Normalized Scroll Progress
+      // Normalized scroll progress
       const docHeight = document.documentElement.scrollHeight - window.innerHeight || 1;
       const targetScroll = stateRef.current.scroll;
       const scrollNorm = Math.min(1, Math.max(0, targetScroll / docHeight));
@@ -237,126 +436,69 @@ export default function WorldCanvas3D({ scrollProgress = 0 }) {
       ctx.clearRect(0, 0, w, h);
 
       // =======================================================================
-      // 3D CAMERA FLIGHT: DIVE THROUGH THE CLOTHES (ICHKARIGA KIRIB BORISH)
+      // CAMERA FLIGHT TRAJECTORY: DIVING DIRECTLY DOWN THROUGH CLOTHES
+      // As scroll proceeds down, camera plunges along Z and descends down Y,
+      // flying straight through collar -> chest lining -> waist -> legs -> shoes!
       // =======================================================================
-      // As scroll increases, the camera dives deep into the screen:
-      // Hero (0.0): camZ = 620 (looking at full assembled outfit)
-      // Decomposition (0.15 - 0.40): camZ dives to 320, decomposition explodes outward
-      // Catalog (0.40 - 0.65): camZ dives to 80 (plunging directly through jacket into tunnel!)
-      // Fashion Guide (0.65 - 0.85): camera flies through silk spiral rings
-      // Branches (0.85 - 1.0): camera locks onto 3 Tashkent nodes
-      let targetCamX = mouse.x * 70;
-      let targetCamY = mouse.y * 50;
-      let targetCamZ = 620;
-      let targetRotY = Math.sin(time * 0.2) * 0.15 + mouse.x * 0.4;
-      let targetRotX = mouse.y * 0.25;
-      let decompExplosionFactor = 0.3; // Base exploded distance
+      // Total travel distance in 3D space
+      const flightDistance = 2400;
+      const scrollZ = scrollNorm * flightDistance;
 
-      if (scrollNorm < 0.25) {
-        // HERO STAGE
-        const p = scrollNorm / 0.25;
-        targetCamZ = 620 - p * 220; // 620 -> 400
-        decompExplosionFactor = 0.25 + p * 0.65;
-        targetRotY = mouse.x * 0.4 + p * 0.2;
-      } else if (scrollNorm < 0.55) {
-        // CATALOG STAGE: CAMERA PLUNGES DEEP INSIDE!
-        const p = (scrollNorm - 0.25) / 0.30;
-        targetCamZ = 400 - p * 380; // 400 -> 20! (Right through the deconstructed jacket!)
-        targetCamX = Math.sin(p * Math.PI) * 120 + mouse.x * 40;
-        targetCamY = p * -60 + mouse.y * 30;
-        decompExplosionFactor = 0.9 + p * 1.4; // Maximum spatial explosion
-        targetRotY = p * 0.45 + mouse.x * 0.3;
-      } else if (scrollNorm < 0.80) {
-        // FASHION GUIDE: Camera navigates the silk twill corridor
-        const p = (scrollNorm - 0.55) / 0.25;
-        targetCamZ = 20 + p * 340; // 20 -> 360
-        targetCamX = -90 + p * 180 + mouse.x * 40;
-        decompExplosionFactor = 1.6 - p * 0.7;
-        targetRotY = time * 0.3 + p * 0.8;
-      } else {
-        // BRANCHES & ORDER: Locking onto architectural nodes
-        const p = (scrollNorm - 0.80) / 0.20;
-        targetCamZ = 360 - p * 80;
-        targetCamX = mouse.x * 30;
-        targetCamY = mouse.y * 30;
-        decompExplosionFactor = 0.6;
-      }
+      // Camera coordinates in sartorial world
+      const targetCamZ = 650 - scrollZ;
+      // Camera descends from collar level down through the outfit components
+      const targetCamY = -50 + (scrollNorm * 420) + mouse.y * 35;
+      // Gentle subtle curve in flight to weave around garment panels
+      const targetCamX = Math.sin(scrollNorm * Math.PI * 2.5) * 65 + mouse.x * 50;
 
-      // Smooth camera interpolation
-      camX += (targetCamX - camX) * 0.06;
-      camY += (targetCamY - camY) * 0.06;
-      camZ += (targetCamZ - camZ) * 0.06;
-      rotX += (targetRotX - rotX) * 0.05;
-      rotY += (targetRotY - rotY) * 0.05;
+      // Subtle tilt
+      const targetRotY = mouse.x * 0.25 + Math.sin(time * 0.3) * 0.06;
+      const targetRotX = mouse.y * 0.18 + Math.cos(time * 0.25) * 0.04;
+
+      // Exploded distance factor increases during the scroll so pieces expand outward
+      const decompExplosion = 0.35 + Math.sin(scrollNorm * Math.PI) * 1.35;
+
+      // Interpolate camera
+      camX += (targetCamX - camX) * 0.08;
+      camY += (targetCamY - camY) * 0.08;
+      camZ += (targetCamZ - camZ) * 0.08;
+      rotX += (targetRotX - rotX) * 0.06;
+      rotY += (targetRotY - rotY) * 0.06;
 
       // =======================================================================
-      // 1. DRAW 3D WARP THREAD PARTICLES (Speed Tunnel Flight)
+      // 1. RENDER FLOWING THREAD STREAMS (IP TOLALARI OQIMI)
+      // Spline curves weaving between garment parts
       // =======================================================================
-      const warpSpeed = 1.2 + scrollNorm * 6.5;
-
-      for (let i = 0; i < particleCount; i++) {
-        const pt = particles[i];
-        pt.z -= pt.speed * warpSpeed;
-
-        // Reset particle when passing camera
-        if (pt.z < -camZ - 20) {
-          pt.z = 2000;
-          pt.x = (Math.random() - 0.5) * 2400;
-          pt.y = (Math.random() - 0.5) * 2400;
+      threadStreams.forEach((stream, sIdx) => {
+        ctx.save();
+        ctx.strokeStyle = stream.color;
+        ctx.lineWidth = stream.width;
+        if (stream.dashed && ctx.setLineDash) {
+          ctx.setLineDash([4, 6]);
         }
 
-        const proj = project(pt.x, pt.y, pt.z, camX, camY, -camZ, fov, cx, cy);
-        if (proj && proj.x >= -50 && proj.x <= w + 50 && proj.y >= -50 && proj.y <= h + 50) {
-          const alpha = Math.min(1, Math.max(0.04, 1 - proj.depth / 2400));
-          const pSize = Math.max(0.6, pt.size * proj.scale * 1.5);
-
-          ctx.fillStyle = pt.color;
-          ctx.globalAlpha = alpha * 0.75;
-          ctx.beginPath();
-          ctx.arc(proj.x, proj.y, pSize, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Spatial warp streaks when diving
-          if (warpSpeed > 2.5 && pSize > 1.2) {
-            ctx.strokeStyle = pt.color;
-            ctx.lineWidth = pSize * 0.5;
-            ctx.beginPath();
-            ctx.moveTo(proj.x, proj.y);
-            ctx.lineTo(
-              proj.x - (camX * 0.015) * warpSpeed,
-              proj.y - (pt.speed * warpSpeed * 1.8)
-            );
-            ctx.stroke();
-          }
-        }
-      }
-      ctx.globalAlpha = 1;
-
-      // =======================================================================
-      // 2. DRAW 3D PERSPECTIVE TUNNEL HOOPS (Diving Ring Portals)
-      // =======================================================================
-      tunnelRings.forEach((ring, idx) => {
-        // Move ring with tunnel depth
-        let ringZ = ring.z - ((time * 40 + scrollNorm * 1200) % 1800);
-        if (ringZ < -camZ - 100) ringZ += 1800;
-
-        const segs = 48;
-        ctx.strokeStyle = ring.color;
-        ctx.lineWidth = 1;
         ctx.beginPath();
         let started = false;
 
-        for (let s = 0; s <= segs; s++) {
-          const theta = (s / segs) * Math.PI * 2;
-          let rx = Math.cos(theta) * ring.radius;
-          let ry = Math.sin(theta) * (ring.radius * 0.85); // Oval perspective
-          let rz = ringZ;
+        for (let k = 0; k < stream.knots.length; k++) {
+          const knot = stream.knots[k];
+          // Gentle animated ripple along threads
+          const waveX = Math.sin(time * 2 + k * 0.4 + sIdx) * 8;
+          const waveY = Math.cos(time * 2 + k * 0.4 + sIdx) * 8;
 
-          [rx, ry, rz] = rotateX(rx, ry, rz, rotX * 0.3);
-          [rx, ry, rz] = rotateY(rx, ry, rz, rotY * 0.3);
+          let x = knot.x + waveX;
+          let y = knot.y + waveY;
+          let z = knot.z;
 
-          const proj = project(rx, ry, rz, camX, camY, -camZ, fov, cx, cy);
+          [x, y, z] = rotateX(x, y, z, rotX * 0.4);
+          [x, y, z] = rotateY(x, y, z, rotY * 0.4);
+
+          const proj = project(x, y, z, camX, camY, camZ, fov, cx, cy);
           if (proj) {
+            // Near camera fade
+            const alpha = Math.min(1, Math.max(0, (proj.depth - 25) / 180));
+            if (alpha <= 0.05) continue;
+
             if (!started) {
               ctx.moveTo(proj.x, proj.y);
               started = true;
@@ -366,180 +508,253 @@ export default function WorldCanvas3D({ scrollProgress = 0 }) {
           }
         }
         ctx.stroke();
+        ctx.restore();
       });
 
       // =======================================================================
-      // 3. DRAW 3D SARTORIAL DECOMPOSITION LAYERS (KIYIM DEKOMPOZITSIYASI)
+      // 2. RENDER ELONGATED FIBER PARTICLES (TOLALAR VA MIKRO-IPLAR)
+      // Curved micro-threads streaming past camera in 3D
       // =======================================================================
-      // Helper function to render a set of 3D paths for a clothing layer
-      const renderDecompLayer = (paths, zOffset, xOffset, yOffset, strokeStyle, lineWidth, isDashed = false) => {
-        ctx.save();
-        ctx.strokeStyle = strokeStyle;
-        ctx.lineWidth = lineWidth;
-        if (isDashed && ctx.setLineDash) {
-          ctx.setLineDash([4, 6]);
+      const fiberSpeed = 2.0 + scrollNorm * 7.0;
+
+      for (let i = 0; i < fiberCount; i++) {
+        const fb = fibers[i];
+        fb.z += fb.speed * fiberSpeed;
+
+        // Wrap around camera flight
+        if (fb.z > camZ + 300) {
+          fb.z = camZ - 2000;
+          fb.x = (Math.random() - 0.5) * 1900 + camX;
+          fb.y = (Math.random() - 0.5) * 2200 + camY;
         }
 
-        paths.forEach(path => {
-          ctx.beginPath();
-          let started = false;
+        const proj = project(fb.x, fb.y, fb.z, camX, camY, camZ, fov, cx, cy);
+        if (proj && proj.x >= -60 && proj.x <= w + 60 && proj.y >= -60 && proj.y <= h + 60) {
+          // Fade based on distance & near-camera clip
+          const depthAlpha = Math.min(1, Math.max(0, 1 - proj.depth / 2200));
+          const nearAlpha = Math.min(1, Math.max(0, (proj.depth - 30) / 120));
+          const finalAlpha = depthAlpha * nearAlpha;
 
-          path.forEach(pt => {
-            // Apply layer-specific exploded offsets
-            let x = pt[0] + xOffset * decompExplosionFactor;
-            let y = pt[1] + yOffset * decompExplosionFactor;
-            let z = pt[2] + zOffset * decompExplosionFactor;
+          if (finalAlpha > 0.04) {
+            ctx.save();
+            ctx.strokeStyle = fb.color;
+            ctx.globalAlpha = finalAlpha * 0.7;
+            ctx.lineWidth = Math.max(0.6, 1.4 * proj.scale);
 
-            // Apply 3D global rotation
+            // Draw curved fiber filament
+            ctx.beginPath();
+            ctx.moveTo(proj.x, proj.y);
+            const streakLen = fb.length * proj.scale * (1 + scrollNorm * 1.5);
+            ctx.quadraticCurveTo(
+              proj.x + fb.curve * proj.scale,
+              proj.y + streakLen * 0.5,
+              proj.x,
+              proj.y + streakLen
+            );
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      }
+
+      // =======================================================================
+      // 3. RENDER SHAFFOF KIYIMLAR DEKOMPOZITSIYASI (TRANSLUCENT CLOTHING MODULES)
+      // Multiple deconstruction stages distributed along flight trajectory Z
+      // =======================================================================
+      // Render helper for translucent panels
+      const renderClothingGroup = (panels, zBase, xExplode, yExplode, zExplode, groupAlpha = 1) => {
+        panels.forEach((p) => {
+          // Calculate 3D projected vertices
+          const projectedPts = [];
+          let avgDepth = 0;
+
+          for (let i = 0; i < p.pts.length; i++) {
+            const pt = p.pts[i];
+            let x = pt[0] + xExplode * decompExplosion;
+            let y = pt[1] + yExplode * decompExplosion;
+            let z = zBase + pt[2] + zExplode * decompExplosion;
+
+            // Apply 3D rotation
             [x, y, z] = rotateX(x, y, z, rotX);
             [x, y, z] = rotateY(x, y, z, rotY);
 
-            const proj = project(x, y, z, camX, camY, -camZ, fov, cx, cy);
-            if (proj) {
-              if (!started) {
-                ctx.moveTo(proj.x, proj.y);
-                started = true;
-              } else {
-                ctx.lineTo(proj.x, proj.y);
-              }
+            const proj = project(x, y, z, camX, camY, camZ, fov, cx, cy);
+            if (!proj) return; // Behind camera
+            projectedPts.push(proj);
+            avgDepth += proj.depth;
+          }
+
+          if (projectedPts.length < 2) return;
+          avgDepth /= projectedPts.length;
+
+          // Camera proximity fade (smooth fade when flying right through it!)
+          const nearFade = Math.min(1, Math.max(0, (avgDepth - 35) / 140));
+          const farFade = Math.min(1, Math.max(0, 1 - (avgDepth - 400) / 1600));
+          const netAlpha = nearFade * farFade * groupAlpha;
+          if (netAlpha <= 0.02) return;
+
+          ctx.save();
+          ctx.globalAlpha = netAlpha;
+
+          // Draw polygon / line
+          ctx.beginPath();
+          ctx.moveTo(projectedPts[0].x, projectedPts[0].y);
+          for (let i = 1; i < projectedPts.length; i++) {
+            ctx.lineTo(projectedPts[i].x, projectedPts[i].y);
+          }
+
+          if (p.type === 'polygon') {
+            ctx.closePath();
+            if (p.fill) {
+              ctx.fillStyle = p.fill;
+              ctx.fill();
             }
-          });
-          ctx.stroke();
+          }
+
+          if (p.stroke) {
+            ctx.strokeStyle = p.stroke;
+            ctx.lineWidth = p.width || 1;
+            if (p.dashed && ctx.setLineDash) {
+              ctx.setLineDash(p.dashed);
+            }
+            ctx.stroke();
+          }
+
+          ctx.restore();
         });
-        ctx.restore();
       };
 
-      // Layer 1: Jacket Shell (Front & most prominent in Gold)
-      renderDecompLayer(
-        jacketShellPaths,
-        90,   // zOffset forward
-        -30,  // xOffset left
-        -15,  // yOffset up
-        'rgba(229, 195, 120, 0.65)', // Meratto Gold
-        1.5
-      );
+      // Helper for floating horn buttons
+      const renderButtons = (buttons, zBase, xExplode, yExplode, zExplode) => {
+        buttons.forEach(btn => {
+          let x = btn.x + xExplode * decompExplosion;
+          let y = btn.y + yExplode * decompExplosion;
+          let z = zBase + btn.z + zExplode * decompExplosion;
 
-      // Layer 2: Floating Silk Twill Lining & Canvas (Cyan / Emerald structural layer)
-      renderDecompLayer(
-        liningPaths,
-        15,   // mid-depth
-        25,   // xOffset right
-        -8,
-        'rgba(79, 199, 154, 0.45)', // Silk Emerald
-        1.0,
-        true  // dashed tailoring stitch
-      );
+          [x, y, z] = rotateX(x, y, z, rotX);
+          [x, y, z] = rotateY(x, y, z, rotY);
 
-      // Layer 3: Base Polo / T-Shirt (Sapphire Blue core)
-      renderDecompLayer(
-        basePoloPaths,
-        -40,  // center base
-        0,
-        0,
-        'rgba(96, 165, 250, 0.4)',  // Sapphire Blue
-        1.1
-      );
+          const proj = project(x, y, z, camX, camY, camZ, fov, cx, cy);
+          if (proj && proj.depth > 30) {
+            const alpha = Math.min(1, Math.max(0, (proj.depth - 30) / 100));
+            ctx.save();
+            ctx.globalAlpha = alpha * 0.9;
+            ctx.strokeStyle = '#E5C378';
+            ctx.fillStyle = 'rgba(20, 20, 20, 0.7)';
+            ctx.lineWidth = 1.2;
 
-      // Layer 4: Tapered Trousers with Sharp Crease (Amber Gold lower)
-      renderDecompLayer(
-        trousersPaths,
-        -90,  // deeper Z
-        -20,
-        35,   // lower Y
-        'rgba(245, 158, 11, 0.5)',  // Amber
-        1.3
-      );
+            // Outer button rim
+            const r = btn.r * proj.scale;
+            ctx.beginPath();
+            ctx.arc(proj.x, proj.y, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
 
-      // Layer 5: Calfskin Loafers (Rose Gold base)
-      renderDecompLayer(
-        loafersPaths,
-        -140, // deepest Z
-        30,
-        70,   // lowest Y
-        'rgba(236, 72, 153, 0.55)', // Rose Gold
-        1.4
-      );
+            // 4 Thread Holes + Cross Stitch
+            const d = r * 0.38;
+            ctx.strokeStyle = 'rgba(229, 195, 120, 0.9)';
+            ctx.lineWidth = 0.9;
+            ctx.beginPath();
+            ctx.moveTo(proj.x - d, proj.y - d);
+            ctx.lineTo(proj.x + d, proj.y + d);
+            ctx.moveTo(proj.x + d, proj.y - d);
+            ctx.lineTo(proj.x - d, proj.y + d);
+            ctx.stroke();
+
+            ctx.restore();
+          }
+        });
+      };
+
+      // -----------------------------------------------------------------------
+      // STAGE 1: PRIMARY SUIT SET (Hero & Decomposition Corridor, Z = 0)
+      // -----------------------------------------------------------------------
+      const zStation1 = 0;
+
+      // 1. Jacket Shell (Golden Translucent Outer Shell)
+      renderClothingGroup(jacketPanels, zStation1, -35, -15, 80, 1.0);
+      renderButtons(jacketButtons, zStation1, -35, -15, 80);
+
+      // 2. Silk Twill Canvas & Lining (Emerald Translucent Structural Layer)
+      renderClothingGroup(liningPanels, zStation1, 30, -8, 20, 0.9);
+
+      // 3. Base Cotton Polo (Sapphire Blue Translucent Base Core)
+      renderClothingGroup(poloPanels, zStation1, 0, 0, -50, 0.85);
+
+      // 4. Tapered Pleated Trousers (Amber Translucent Creased Pants)
+      renderClothingGroup(trousersPanels, zStation1, -25, 30, -95, 0.95);
+
+      // 5. Handcrafted Calfskin Loafers (Rose Gold Translucent Footwear)
+      renderClothingGroup(loafersPanels, zStation1, 35, 60, -140, 0.9);
+
+      // -----------------------------------------------------------------------
+      // STAGE 2: SECOND SARTORIAL SET IN DEEP PERSPECTIVE (Z = -950)
+      // Greets camera as user dives past middle catalog into styling guide!
+      // -----------------------------------------------------------------------
+      const zStation2 = -950;
+      renderClothingGroup(jacketPanels, zStation2, 35, -10, 70, 0.85);
+      renderButtons(jacketButtons, zStation2, 35, -10, 70);
+      renderClothingGroup(liningPanels, zStation2, -30, -6, 15, 0.8);
+      renderClothingGroup(poloPanels, zStation2, 0, 0, -45, 0.75);
+      renderClothingGroup(trousersPanels, zStation2, 20, 25, -90, 0.85);
+      renderClothingGroup(loafersPanels, zStation2, -30, 50, -135, 0.8);
+
+      // -----------------------------------------------------------------------
+      // STAGE 3: THIRD DECONSTRUCTED SET (Z = -1900)
+      // Greets camera near bottom branches & ordering section!
+      // -----------------------------------------------------------------------
+      const zStation3 = -1900;
+      renderClothingGroup(jacketPanels, zStation3, -30, -12, 75, 0.75);
+      renderButtons(jacketButtons, zStation3, -30, -12, 75);
+      renderClothingGroup(liningPanels, zStation3, 25, -8, 20, 0.7);
+      renderClothingGroup(trousersPanels, zStation3, -20, 25, -85, 0.75);
+      renderClothingGroup(loafersPanels, zStation3, 25, 45, -130, 0.7);
 
       // =======================================================================
-      // 4. DRAW 3D DECOMPOSITION LABELS & MEASURING CROSSHAIRS
+      // 4. RENDER 3D SARTORIAL HUD LABELS & MEASURING CROSSHAIRS
       // =======================================================================
-      decompMarkers.forEach((marker, mIdx) => {
-        let x = marker.pos[0] * (1 + decompExplosionFactor * 0.35);
+      sartorialHudMarkers.forEach((marker) => {
+        let x = marker.pos[0] * (1 + decompExplosion * 0.35);
         let y = marker.pos[1];
-        let z = marker.pos[2] + (mIdx % 2 === 0 ? 50 : -50) * decompExplosionFactor;
+        let z = zStation1 + marker.pos[2];
 
         [x, y, z] = rotateX(x, y, z, rotX);
         [x, y, z] = rotateY(x, y, z, rotY);
 
-        const proj = project(x, y, z, camX, camY, -camZ, fov, cx, cy);
+        const proj = project(x, y, z, camX, camY, camZ, fov, cx, cy);
         if (proj && proj.x >= 20 && proj.x <= w - 20 && proj.y >= 20 && proj.y <= h - 20) {
-          const { x: px, y: py, scale } = proj;
+          const nearFade = Math.min(1, Math.max(0, (proj.depth - 35) / 120));
+          const farFade = Math.min(1, Math.max(0, 1 - proj.depth / 1500));
+          const netAlpha = nearFade * farFade;
 
-          // Crosshair target node
-          ctx.strokeStyle = marker.color;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.arc(px, py, 3.5 * scale, 0, Math.PI * 2);
-          ctx.stroke();
+          if (netAlpha > 0.05) {
+            const { x: px, y: py, scale } = proj;
 
-          // Connecting trajectory leader line
-          ctx.beginPath();
-          ctx.moveTo(px, py);
-          ctx.lineTo(px + 20, py - 12);
-          ctx.lineTo(px + 50, py - 12);
-          ctx.stroke();
+            ctx.save();
+            ctx.globalAlpha = netAlpha;
 
-          // 3D HUD Annotation Text
-          ctx.save();
-          ctx.fillStyle = marker.color;
-          ctx.font = `600 ${Math.max(9, Math.round(10.5 * scale))}px "IBM Plex Mono", monospace`;
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
-          ctx.shadowBlur = 8;
-          ctx.fillText(marker.text, px + 55, py - 9);
-          ctx.restore();
-        }
-      });
+            // Reticle Target Node
+            ctx.strokeStyle = marker.color;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(px, py, 3.5 * scale, 0, Math.PI * 2);
+            ctx.stroke();
 
-      // =======================================================================
-      // 5. DRAW 3D TASHKENT BOUTIQUE RADAR NODES
-      // =======================================================================
-      boutiqueNodes.forEach((node) => {
-        let x = node.pos[0];
-        let y = node.pos[1];
-        let z = node.pos[2];
+            // Technical Leader Trajectory
+            ctx.beginPath();
+            ctx.moveTo(px, py);
+            ctx.lineTo(px + 22, py - 12);
+            ctx.lineTo(px + 52, py - 12);
+            ctx.stroke();
 
-        [x, y, z] = rotateX(x, y, z, rotX);
-        [x, y, z] = rotateY(x, y, z, rotY);
-
-        const proj = project(x, y, z, camX, camY, -camZ, fov, cx, cy);
-        if (proj) {
-          const { x: px, y: py, scale } = proj;
-
-          // Pulsing radar wave
-          const pulse = (time * 1.8) % 1;
-          const waveRadius = (6 + pulse * 24) * scale;
-
-          ctx.fillStyle = node.color;
-          ctx.beginPath();
-          ctx.arc(px, py, 4 * scale, 0, Math.PI * 2);
-          ctx.fill();
-
-          ctx.strokeStyle = node.color;
-          ctx.globalAlpha = Math.max(0, 0.7 - pulse);
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.arc(px, py, waveRadius, 0, Math.PI * 2);
-          ctx.stroke();
-
-          // Label
-          ctx.save();
-          ctx.fillStyle = '#ffffff';
-          ctx.font = '600 10px "IBM Plex Mono", monospace';
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-          ctx.shadowBlur = 6;
-          ctx.fillText(node.name, px + 12, py + 3);
-          ctx.restore();
-          ctx.globalAlpha = 1;
+            // Label text
+            ctx.fillStyle = marker.color;
+            ctx.font = `600 ${Math.max(9, Math.round(10.5 * scale))}px "IBM Plex Mono", monospace`;
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+            ctx.shadowBlur = 8;
+            ctx.fillText(marker.text, px + 56, py - 9);
+            ctx.restore();
+          }
         }
       });
     };
