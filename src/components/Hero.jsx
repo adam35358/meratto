@@ -55,6 +55,7 @@ export default function Hero({ t, heroData = {} }) {
 
             {/* Main Headline in Outfit Display Typography */}
             <h1 className="font-display font-light text-4xl sm:text-6xl lg:text-7xl text-white tracking-[-0.03em] leading-[1.06]">
+              <span className="sr-only">Meratto &amp; De Franko — Toshkentdagi Erkaklar Kiyimlari Do'koni: </span>
               {titleLine1} <br />
               {titleHighlight && (
                 <span className="font-normal italic text-[#E5C378] mr-2">
