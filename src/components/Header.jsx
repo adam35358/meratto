@@ -91,6 +91,10 @@ export default function Header({ lang, setLang, t, cartCount, openCart, phone = 
                 <span className="font-mono text-[10px] text-white/30">01</span>
                 <span>{t.nav.about}</span>
               </a>
+              <a href="#decomposition-3d" className="hover:text-white text-[#E5C378] transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                <span className="font-mono text-[10px] text-[#E5C378]/60">3D</span>
+                <span>Dekompozitsiya</span>
+              </a>
               <a href="#catalog" className="hover:text-white transition-colors flex items-center gap-1.5 whitespace-nowrap shrink-0">
                 <span className="font-mono text-[10px] text-white/30">02</span>
                 <span>{t.nav.catalog}</span>
@@ -199,6 +203,14 @@ export default function Header({ lang, setLang, t, cartCount, openCart, phone = 
             className="block font-display text-sm tracking-wide text-neutral-200 hover:text-[#E5C378] py-2 border-b border-white/5"
           >
             01 // {t.nav.about}
+          </a>
+          <a 
+            href="#decomposition-3d" 
+            onClick={() => setMobileMenuOpen(false)}
+            className="block font-display text-sm tracking-wide text-[#E5C378] font-bold py-2 border-b border-white/5 flex items-center justify-between"
+          >
+            <span>✨ 3D Kiyim Dekompozitsiyasi</span>
+            <span className="font-mono text-[9px] bg-[#E5C378]/20 px-2 py-0.5 rounded text-[#E5C378]">3D</span>
           </a>
           <a 
             href="#catalog" 

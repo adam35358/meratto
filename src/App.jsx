@@ -12,6 +12,7 @@ import Footer from './components/Footer';
 import MouseFollower from './components/MouseFollower';
 import SectionDivider from './components/SectionDivider';
 import WorldCanvas3D from './components/WorldCanvas3D';
+import ClothingDecomposition3D from './components/ClothingDecomposition3D';
 
 import { translations } from './data/translations';
 import initialProducts from './data/products.json';
@@ -180,6 +181,7 @@ export default function App() {
       });
 
       // Section-based Dynamic Ambient Lighting Shifts
+      const decompEl = document.getElementById('decomposition-3d');
       const catalogEl = document.getElementById('catalog');
       const fashionEl = document.getElementById('fashion-guide');
       const reviewsEl = document.getElementById('reviews');
@@ -196,6 +198,8 @@ export default function App() {
       } else if (fashionEl && y >= fashionEl.offsetTop) {
         setAmbientTheme('sapphire');
       } else if (catalogEl && y >= catalogEl.offsetTop) {
+        setAmbientTheme('gold');
+      } else if (decompEl && y >= decompEl.offsetTop) {
         setAmbientTheme('gold');
       } else {
         setAmbientTheme('obsidian');
@@ -404,10 +408,20 @@ export default function App() {
         {/* 1. Hero Section */}
         <Hero t={t} heroData={siteHero} />
 
-        {/* Transition Divider 1 */}
-        <SectionDivider variant="glow-line" title="02 // MERATTO EKSKLYUZIV ASSORTIMENTI" />
+        {/* Transition Divider 1: 3D Clothing Decomposition */}
+        <SectionDivider variant="glow-line" title="02 // 3D KIYIM DEKOMPOZITSIYASI & ANATOMIYASI" />
 
-        {/* 2. Products Catalog Section with WOUFX 3D Camera Depth */}
+        {/* 2. 3D Sartorial Decomposition & Exploded View Architecture */}
+        <ClothingDecomposition3D
+          lang={lang}
+          t={t}
+          onSelectLook={(look) => setPrefillProduct(look)}
+        />
+
+        {/* Transition Divider 2: Archive Catalog */}
+        <SectionDivider variant="glow-line" title="03 // MERATTO EKSKLYUZIV ASSORTIMENTI" />
+
+        {/* 3. Products Catalog Section with WOUFX 3D Camera Depth */}
         <section id="catalog" data-reveal="scale" className="scene-exit py-20 sm:py-28 relative overflow-hidden">
           
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
