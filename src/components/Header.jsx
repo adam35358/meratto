@@ -23,11 +23,13 @@ export default function Header({ lang, setLang, t, cartCount, openCart, phone = 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-300">
       {/* Top Technical Announcement Ticker (WOUFX Style) */}
-      <div className="bg-[#07090c]/95 backdrop-blur-md border-b border-white/[0.06] text-[#8f96a0] text-[10.5px] font-mono tracking-[0.14em] uppercase py-1.5 px-4 hidden sm:flex items-center justify-between lg:justify-center gap-4 select-none">
+      <div className="bg-[#07090c]/95 backdrop-blur-md border-b border-white/[0.06] text-[#8f96a0] text-[10.5px] font-mono tracking-[0.14em] uppercase py-2 px-3 sm:px-4 flex items-center justify-center gap-3 select-none overflow-hidden">
         {announcement ? (
-          <div className="flex items-center gap-2 shrink-0 text-white">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E5C378] animate-pulse shrink-0" />
-            <span className="whitespace-nowrap text-[#E5C378] font-medium">{announcement}</span>
+          <div className="flex items-center gap-2 max-w-full overflow-hidden text-center">
+            <span className="w-2 h-2 rounded-full bg-[#E5C378] animate-pulse shrink-0" />
+            <span className="text-[#E5C378] font-medium text-xs sm:text-[11px] tracking-normal leading-tight">
+              {announcement}
+            </span>
           </div>
         ) : (
           <>

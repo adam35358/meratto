@@ -2969,34 +2969,95 @@ export default function AdminPanel({ onBackToSite, onProductsUpdated, onSettings
 
             <form onSubmit={handleSaveHeroSettings} className="space-y-6">
               {/* Section 1: Top Announcement Marquee */}
-              <div className="bg-[#0e1015] border border-white/10 rounded-2xl p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-display font-medium text-base text-white flex items-center gap-2">
+              <div className="bg-[#0e1015] border border-white/10 rounded-2xl p-6 space-y-4 shadow-xl">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/5">
+                  <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-[#E5C378]" />
-                    <span>Sayt Tepasidagi Yuguruvchi E'lon (Announcement Bar)</span>
-                  </h3>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={heroSettings.announcementActive !== false}
-                      onChange={(e) => setHeroSettings(prev => ({ ...prev, announcementActive: e.target.checked }))}
-                      className="w-4 h-4 accent-[#E5C378] rounded cursor-pointer"
-                    />
-                    <span className="text-xs font-mono text-[#8f96a0]">Faol (Ko'rsatish)</span>
-                  </label>
+                    <h3 className="font-display font-medium text-base text-white">
+                      Sayt Tepasidagi Yuguruvchi E'lon (Announcement Bar)
+                    </h3>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+                      <input
+                        type="checkbox"
+                        checked={heroSettings.announcementActive !== false}
+                        onChange={(e) => setHeroSettings(prev => ({ ...prev, announcementActive: e.target.checked }))}
+                        className="w-4 h-4 accent-[#E5C378] rounded cursor-pointer"
+                      />
+                      <span className="text-xs font-mono text-[#8f96a0]">Faol (Saytda ko'rsatish)</span>
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={handleSaveHeroSettings}
+                      disabled={heroSaving}
+                      className="py-1.5 px-4 rounded-xl bg-gradient-to-r from-[#E5C378] to-[#c29e50] text-[#07080a] font-semibold text-xs tracking-wide shadow hover:brightness-110 active:scale-95 transition-all flex items-center gap-1.5 shrink-0"
+                    >
+                      {heroSaving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                      <span>{heroSaving ? "Saqlanmoqda..." : "E'lonni Saqlash"}</span>
+                    </button>
+                  </div>
                 </div>
 
+                {/* Textarea */}
                 <div>
-                  <label className="block text-xs font-mono text-[#8f96a0] mb-2 uppercase tracking-wider">
-                    E'lon matni (Maxsus taklif, chegirma yoki aksiyalar):
-                  </label>
-                  <input
-                    type="text"
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-mono text-[#8f96a0] uppercase tracking-wider">
+                      E'lon matni (Maxsus taklif, chegirma yoki aksiyalar):
+                    </label>
+                    <span className="text-[11px] text-[#8f96a0] font-mono">
+                      {(heroSettings.announcement || '').length} belgi
+                    </span>
+                  </div>
+
+                  <textarea
+                    rows={2}
                     value={heroSettings.announcement || ''}
                     onChange={(e) => setHeroSettings(prev => ({ ...prev, announcement: e.target.value }))}
                     placeholder="🔥 Yangi 2026 Bahorgi Kolleksiya sotuvda! Toshkent bo'ylab bepul tezkor yetkazib berish..."
-                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-[#555a64] focus:outline-none focus:border-[#E5C378]"
+                    className="w-full bg-[#16181f] border border-white/10 rounded-xl px-4 py-3 text-xs text-white placeholder-[#555a64] focus:outline-none focus:border-[#E5C378] resize-none leading-relaxed"
                   />
+
+                  {/* Quick Preset Templates */}
+                  <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+                    <span className="text-[11px] text-[#8f96a0] mr-1">Tezkor namunalar:</span>
+                    {[
+                      "🔥 Yangi 2026 Bahorgi Kolleksiya barcha 3 ta do'konimizda sotuvda! Toshkent bo'ylab bepul tezkor kuryer yetkazib berish xizmati mavjud.",
+                      "🚚 Toshkent shahri bo'ylab 2 soat ichida bepul kuryer yetkazib berish va do'konda kiyib ko'rish xizmati!",
+                      "⚡ Barcha Smart Casual dvoykalar va to'plamlarga maxsus bayramona chegirmalar e'lon qilindi!",
+                      "✨ Meratto Qoratosh, Chilonzor va De Franko filiallarida yangi eksklyuziv italyancha kostyumlar sotuvda!"
+                    ].map((preset, pIdx) => (
+                      <button
+                        key={pIdx}
+                        type="button"
+                        onClick={() => {
+                          setHeroSettings(prev => ({ ...prev, announcement: preset, announcementActive: true }));
+                          showToast("Namuna matni kiritildi!");
+                        }}
+                        className="text-[10px] px-2.5 py-1 rounded-lg bg-white/5 hover:bg-[#E5C378]/20 hover:text-[#E5C378] text-[#8f96a0] border border-white/5 transition-colors text-left"
+                      >
+                        {preset.slice(0, 32)}...
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Live Preview Bar */}
+                <div className="pt-2">
+                  <div className="text-[11px] font-mono text-[#8f96a0] mb-1.5 flex items-center justify-between">
+                    <span>Saytdagi ko'rinishi (Jonli Preview):</span>
+                    {heroSettings.announcementActive === false && (
+                      <span className="text-red-400 font-mono text-[10px]">⚠️ Hozirda o'chirilgan (saytda ko'rinmaydi)</span>
+                    )}
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-[#07090c] border border-white/10 flex items-center justify-center gap-2 overflow-hidden text-center">
+                    <span className="w-2 h-2 rounded-full bg-[#E5C378] animate-pulse shrink-0" />
+                    <span className="text-xs text-[#E5C378] font-medium font-mono truncate">
+                      {heroSettings.announcement || "E'lon matni bo'sh"}
+                    </span>
+                  </div>
                 </div>
               </div>
 
