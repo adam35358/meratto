@@ -146,8 +146,8 @@ export default function App() {
         }
       });
     }, {
-      threshold: 0.08,
-      rootMargin: '0px 0px -40px 0px'
+      threshold: 0.01,
+      rootMargin: '100px 0px'
     });
 
     const observeElements = () => {
